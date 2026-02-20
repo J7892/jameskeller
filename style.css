@@ -21,11 +21,15 @@ body {
     overflow-x: hidden;
 }
 
+
 .main-layout {
     display: flex;
     min-height: 100vh;
+    max-width: 1400px; /* Caps the layout width */
+    margin: 0 auto; /* Centers the layout on massive screens */
     animation: fadeIn 1s ease-out forwards;
 }
+
 
 .sidebar {
     width: 45%;
