@@ -1,12 +1,17 @@
 :root {
     --bg: #0f0f0f;
     --text: #ffffff;
-    --accent: #d4af37; 
+    --accent: #d4af37; /* Editorial Gold */
     --dim: #777777;
     --border: #222222;
 }
 
 * { box-sizing: border-box; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 body {
     margin: 0;
@@ -19,8 +24,10 @@ body {
 .main-layout {
     display: flex;
     min-height: 100vh;
+    animation: fadeIn 1s ease-out forwards;
 }
 
+/* LEFT SIDEBAR */
 .sidebar {
     width: 45%;
     padding: 10vh 5% 5vh 8%;
@@ -33,7 +40,7 @@ body {
 }
 
 .hero-name {
-    font-weight: 500;
+    font-weight: 500; /* Medium Weight */
     font-size: clamp(3rem, 6vw, 5.5rem);
     line-height: 1.0;
     margin: 0;
@@ -62,16 +69,21 @@ body {
     transition: filter 0.4s ease;
 }
 
+.profile-img:hover {
+    filter: grayscale(0%);
+}
+
+/* RIGHT CONTENT AREA */
 .content-area {
     width: 55%;
-    padding: 15vh 10% 10vh 8%; /* Increased bottom padding */
+    padding: 15vh 10% 10vh 8%;
     display: flex;
     flex-direction: column;
 }
 
 .bio-text {
-    font-size: 1.25rem;
-    line-height: 1.6;
+    font-size: 1.25rem; /* Smaller Bio */
+    line-height: 1.7;
     font-weight: 300;
     color: #cccccc;
     max-width: 480px;
@@ -82,38 +94,41 @@ body {
     color: var(--text);
 }
 
+/* SOCIAL ICONS */
 .social-icons {
     margin-top: 4rem;
     display: flex;
     gap: 2.5rem;
+    align-items: center;
 }
 
 .social-icons a {
     color: var(--text);
     text-decoration: none;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     transition: 0.3s ease;
-    opacity: 0.7;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
 }
 
 .social-icons a:hover {
     color: var(--accent);
     opacity: 1;
-    transform: translateY(-3px);
+    transform: translateY(-4px);
 }
 
+/* Custom Maple Leaf SVG */
+.globe-leaf svg {
+    width: 30px;
+    height: 30px;
+    fill: currentColor;
+}
+
+/* MOBILE ADAPTATION */
 @media (max-width: 900px) {
     .main-layout { flex-direction: column; }
     .sidebar, .content-area { width: 100%; border-right: none; padding: 10% 8%; }
     .hero-name { font-size: 3.5rem; }
-}
-
-/* Fade-in Animation */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.main-layout {
-    animation: fadeIn 0.8s ease-out forwards;
+    .social-icons { justify-content: flex-start; }
 }
