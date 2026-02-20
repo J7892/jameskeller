@@ -70,7 +70,7 @@ body {
 
 .profile-img {
     width: 100%;
-    aspect-ratio: 4 / 5; /* Try 1/1 for a square, or 4/5 for a shorter vertical */
+    aspect-ratio: 1 / 1; /* Try 1/1 for a square, or 4/5 for a shorter vertical */
     object-fit: cover; /* This ensures the image fills the shape without squishing */
     border-radius: 2px;
     filter: grayscale(100%);
