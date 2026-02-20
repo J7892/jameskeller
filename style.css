@@ -1,91 +1,115 @@
 :root {
-    --bg: #ffffff;
-    --text: #1a1a1a;
-    --accent: #666666;
-    --border: #eaeaea;
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --accent: #d4af37; /* Subtle gold accent */
+    --border: #333333;
 }
 
 body {
     margin: 0;
     font-family: 'Inter', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
     display: flex;
     flex-direction: column;
-    align-items: center;
     min-height: 100vh;
 }
 
 .container {
-    max-width: 500px;
+    max-width: 800px;
     width: 90%;
-    padding: 4rem 1rem;
-    text-align: center;
+    margin: 6rem auto;
 }
 
-.profile-header {
-    margin-bottom: 2.5rem;
+/* Side-by-Side Layout */
+.profile-section {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    margin-bottom: 3rem;
 }
 
 .profile-img {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
+    width: 180px; /* Larger photo */
+    height: 180px;
+    border-radius: 12px; /* Soft square instead of circle for a modern look */
     object-fit: cover;
-    margin-bottom: 1.5rem;
     border: 1px solid var(--border);
-    background-color: #f9f9f9;
 }
 
-h1 {
+.profile-text h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 2.5rem;
+    font-size: 3.5rem;
     margin: 0;
-    font-weight: 700;
+    line-height: 1;
 }
 
 .subtitle {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     color: var(--accent);
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
 }
 
 .bio {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 600px;
     margin-bottom: 3rem;
-    font-size: 1.1rem;
-    line-height: 1.7;
-    color: #333;
 }
 
-.link-grid {
-    display: flex;
-    flex-direction: column;
+.bio strong {
+    color: var(--text-primary);
+}
+
+/* Link Grid */
+.links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
 }
 
 .link-card {
-    display: block;
-    padding: 1.25rem;
+    padding: 1rem;
+    background: var(--card-bg);
     border: 1px solid var(--border);
     text-decoration: none;
-    color: var(--text);
+    color: var(--text-primary);
+    text-align: center;
     font-weight: 600;
-    transition: all 0.2s ease-in-out;
-    border-radius: 6px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
 }
 
 .link-card:hover {
-    background-color: #000;
-    color: #fff;
-    transform: translateY(-2px);
+    border-color: var(--text-primary);
+    transform: translateY(-3px);
+}
+
+.secondary {
+    opacity: 0.6;
+    font-style: italic;
 }
 
 footer {
     margin-top: auto;
-    padding: 3rem;
-    font-size: 0.75rem;
-    color: #999;
-    letter-spacing: 1px;
+    padding: 4rem 0;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 600px) {
+    .profile-section {
+        flex-direction: column;
+        text-align: center;
+    }
+    .profile-text h1 {
+        font-size: 2.5rem;
+    }
 }
