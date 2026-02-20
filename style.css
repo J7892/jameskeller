@@ -3,7 +3,7 @@
     --card-bg: #1e1e1e;
     --text-primary: #ffffff;
     --text-secondary: #a0a0a0;
-    --accent: #d4af37; /* Subtle gold accent */
+    --accent: #d4af37; 
     --border: #333333;
 }
 
@@ -19,32 +19,32 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 850px;
     width: 90%;
-    margin: 6rem auto;
+    margin: 10vh auto;
 }
 
 /* Side-by-Side Layout */
 .profile-section {
     display: flex;
     align-items: center;
-    gap: 2.5rem;
-    margin-bottom: 3rem;
+    gap: 3rem;
+    margin-bottom: 3.5rem;
 }
 
 .profile-img {
-    width: 180px; /* Larger photo */
-    height: 180px;
-    border-radius: 12px; /* Soft square instead of circle for a modern look */
+    width: 200px; /* Larger photo */
+    height: 200px;
+    border-radius: 8px; /* Modern soft-square */
     object-fit: cover;
     border: 1px solid var(--border);
 }
 
 .profile-text h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 3.5rem;
+    font-size: 3.8rem;
     margin: 0;
-    line-height: 1;
+    line-height: 1.1;
 }
 
 .subtitle {
@@ -56,60 +56,48 @@ body {
 }
 
 .bio {
-    font-size: 1.15rem;
+    font-size: 1.25rem;
     color: var(--text-secondary);
-    max-width: 600px;
-    margin-bottom: 3rem;
+    max-width: 650px;
+    margin-bottom: 3.5rem;
+    border-left: 2px solid var(--border);
+    padding-left: 2rem;
 }
 
-.bio strong {
-    color: var(--text-primary);
-}
-
-/* Link Grid */
 .links {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
 }
 
 .link-card {
-    padding: 1rem;
-    background: var(--card-bg);
+    padding: 0.8rem 1.5rem;
+    background: transparent;
     border: 1px solid var(--border);
     text-decoration: none;
     color: var(--text-primary);
-    text-align: center;
-    font-weight: 600;
+    font-weight: 400;
     border-radius: 4px;
     transition: all 0.3s ease;
 }
 
 .link-card:hover {
-    border-color: var(--text-primary);
-    transform: translateY(-3px);
-}
-
-.secondary {
-    opacity: 0.6;
-    font-style: italic;
+    background: var(--text-primary);
+    color: var(--bg-color);
 }
 
 footer {
     margin-top: auto;
     padding: 4rem 0;
     text-align: center;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+    font-size: 0.75rem;
+    color: #444;
 }
 
-/* Mobile Adjustments */
-@media (max-width: 600px) {
-    .profile-section {
-        flex-direction: column;
-        text-align: center;
-    }
-    .profile-text h1 {
-        font-size: 2.5rem;
-    }
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .profile-section { flex-direction: column; text-align: center; gap: 1.5rem; }
+    .profile-text h1 { font-size: 2.8rem; }
+    .bio { border-left: none; padding-left: 0; }
+    .links { justify-content: center; }
 }
