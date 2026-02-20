@@ -104,7 +104,7 @@ body {
 }
 
 .social-icons {
-    margin-top: 4rem;
+    margin-top: 1.5rem; /* Reduced from 4rem */
     display: flex;
     gap: 2.5rem;
     align-items: center;
