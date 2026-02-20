@@ -67,8 +67,11 @@ body {
     max-width: 340px; /* Increased from 260px to accommodate the portrait aspect ratio */
 }
 
+
 .profile-img {
     width: 100%;
+    aspect-ratio: 4 / 5; /* Try 1/1 for a square, or 4/5 for a shorter vertical */
+    object-fit: cover; /* This ensures the image fills the shape without squishing */
     border-radius: 2px;
     filter: grayscale(100%);
     transition: filter 0.4s ease;
