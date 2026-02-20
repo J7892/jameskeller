@@ -19,8 +19,9 @@ body {
     background-color: var(--bg);
     color: var(--text);
     overflow-x: hidden;
+    /* Add this line: */
+    scrollbar-gutter: stable; 
 }
-
 
 .main-layout {
     display: flex;
