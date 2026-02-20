@@ -51,8 +51,10 @@ body {
     letter-spacing: -1px;
 }
 
+
 .hero-title {
     margin-top: 1.5rem;
+    margin-bottom: 2.5rem; /* Added extra space below the title */
     font-size: 0.8rem;
     font-weight: 400;
     text-transform: uppercase;
@@ -61,8 +63,8 @@ body {
 }
 
 .image-wrapper {
-    margin-top: 3rem;
-    max-width: 260px;
+    margin-top: 0; /* Removed top margin since we added it to the title */
+    max-width: 340px; /* Increased from 260px to accommodate the portrait aspect ratio */
 }
 
 .profile-img {
