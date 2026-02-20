@@ -83,7 +83,11 @@ body {
     padding: 15vh 10% 10vh 8%;
     display: flex;
     flex-direction: column;
+    /* Add these two lines: */
+    opacity: 0; /* Starts invisible */
+    animation: fadeIn 1s ease-out 0.3s forwards; /* The 0.3s creates the delay */
 }
+
 
 .bio-text {
     font-size: 1.25rem;
@@ -119,6 +123,11 @@ body {
     color: var(--accent);
     opacity: 1;
     transform: translateY(-4px);
+}
+
+::selection {
+    background-color: var(--accent);
+    color: var(--bg);
 }
 
 @media (max-width: 900px) {
