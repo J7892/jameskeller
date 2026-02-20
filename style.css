@@ -27,7 +27,6 @@ body {
     animation: fadeIn 1s ease-out forwards;
 }
 
-/* SIDEBAR SETUP */
 .sidebar {
     width: 45%;
     padding: 10vh 5% 5vh 8%;
@@ -73,7 +72,6 @@ body {
     filter: grayscale(0%);
 }
 
-/* CONTENT AREA SETUP */
 .content-area {
     width: 55%;
     padding: 15vh 10% 10vh 8%;
@@ -94,7 +92,6 @@ body {
     color: var(--text);
 }
 
-/* ICONS */
 .social-icons {
     margin-top: 4rem;
     display: flex;
@@ -118,14 +115,6 @@ body {
     transform: translateY(-4px);
 }
 
-/* Custom Icon Styling */
-.globe-leaf svg {
-    width: 28px;
-    height: 28px;
-    fill: currentColor;
-}
-
-/* RESPONSIVE LAYOUT */
 @media (max-width: 900px) {
     .main-layout { flex-direction: column; }
     .sidebar, .content-area { width: 100%; border-right: none; padding: 10% 8%; }
