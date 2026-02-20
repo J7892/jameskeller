@@ -21,7 +21,6 @@ body {
     min-height: 100vh;
 }
 
-/* LEFT SIDEBAR */
 .sidebar {
     width: 45%;
     padding: 10vh 5% 5vh 8%;
@@ -34,7 +33,7 @@ body {
 }
 
 .hero-name {
-    font-weight: 500; /* Medium weight, less bold */
+    font-weight: 500;
     font-size: clamp(3rem, 6vw, 5.5rem);
     line-height: 1.0;
     margin: 0;
@@ -63,18 +62,19 @@ body {
     transition: filter 0.4s ease;
 }
 
-/* RIGHT CONTENT AREA */
 .content-area {
     width: 55%;
-    padding: 15vh 10% 5vh 8%;
+    padding: 15vh 10% 10vh 8%; /* Increased bottom padding */
+    display: flex;
+    flex-direction: column;
 }
 
 .bio-text {
-    font-size: 1.25rem; /* Reduced bio size */
+    font-size: 1.25rem;
     line-height: 1.6;
     font-weight: 300;
     color: #cccccc;
-    max-width: 480px; /* Thinner column for better readability */
+    max-width: 480px;
 }
 
 .bio-text strong {
@@ -91,7 +91,7 @@ body {
 .social-icons a {
     color: var(--text);
     text-decoration: none;
-    font-size: 1.5rem; /* Icon size */
+    font-size: 1.5rem;
     transition: 0.3s ease;
     opacity: 0.7;
 }
@@ -102,18 +102,8 @@ body {
     transform: translateY(-3px);
 }
 
-footer {
-    margin-top: 10rem;
-    font-size: 0.65rem;
-    color: var(--dim);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-/* MOBILE VIEW */
 @media (max-width: 900px) {
     .main-layout { flex-direction: column; }
     .sidebar, .content-area { width: 100%; border-right: none; padding: 10% 8%; }
     .hero-name { font-size: 3.5rem; }
-    .social-icons { justify-content: flex-start; }
 }
