@@ -107,3 +107,13 @@ body {
     .sidebar, .content-area { width: 100%; border-right: none; padding: 10% 8%; }
     .hero-name { font-size: 3.5rem; }
 }
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.main-layout {
+    animation: fadeIn 0.8s ease-out forwards;
+}
