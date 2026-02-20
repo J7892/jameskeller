@@ -118,12 +118,16 @@ body {
     transform: translateY(-4px);
 }
 
-/* Custom Maple Leaf SVG */
+
+/* Update this specific block in your style.css */
 .globe-leaf svg {
-    width: 30px;
-    height: 30px;
+    width: 24px;   /* Adjusted for visual parity with icons */
+    height: 24px;
     fill: currentColor;
+    display: inline-block;
+    vertical-align: middle;
 }
+
 
 /* MOBILE ADAPTATION */
 @media (max-width: 900px) {
