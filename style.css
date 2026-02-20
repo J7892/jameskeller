@@ -67,10 +67,8 @@ body {
     max-width: 340px; /* Increased from 260px to accommodate the portrait aspect ratio */
 }
 
-
 .profile-img {
     width: 100%;
-    object-fit: cover; /* This ensures the image fills the shape without squishing */
     border-radius: 2px;
     filter: grayscale(100%);
     transition: filter 0.4s ease;
@@ -129,10 +127,11 @@ body {
     .hero-name { font-size: 3.5rem; }
     .social-icons { justify-content: flex-start; }
     
-    /* This is the new block for mobile cropping */
+    /* This makes it a square ONLY on mobile screens */
     .profile-img {
         aspect-ratio: 1 / 1; 
         object-fit: cover;
-        object-position: center 60%; 
+        /* Note: If the center square crop cuts off your head, add this line: */
+        /* object-position: center 30%; */
     }
 }
