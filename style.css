@@ -1,7 +1,7 @@
 :root {
     --bg: #0f0f0f;
     --text: #ffffff;
-    --accent: #d4af37; /* Editorial Gold */
+    --accent: #d4af37; 
     --dim: #777777;
     --border: #222222;
 }
@@ -27,7 +27,7 @@ body {
     animation: fadeIn 1s ease-out forwards;
 }
 
-/* LEFT SIDEBAR */
+/* SIDEBAR SETUP */
 .sidebar {
     width: 45%;
     padding: 10vh 5% 5vh 8%;
@@ -40,7 +40,7 @@ body {
 }
 
 .hero-name {
-    font-weight: 500; /* Medium Weight */
+    font-weight: 500;
     font-size: clamp(3rem, 6vw, 5.5rem);
     line-height: 1.0;
     margin: 0;
@@ -73,7 +73,7 @@ body {
     filter: grayscale(0%);
 }
 
-/* RIGHT CONTENT AREA */
+/* CONTENT AREA SETUP */
 .content-area {
     width: 55%;
     padding: 15vh 10% 10vh 8%;
@@ -82,7 +82,7 @@ body {
 }
 
 .bio-text {
-    font-size: 1.25rem; /* Smaller Bio */
+    font-size: 1.25rem;
     line-height: 1.7;
     font-weight: 300;
     color: #cccccc;
@@ -94,7 +94,7 @@ body {
     color: var(--text);
 }
 
-/* SOCIAL ICONS */
+/* ICONS */
 .social-icons {
     margin-top: 4rem;
     display: flex;
@@ -118,18 +118,14 @@ body {
     transform: translateY(-4px);
 }
 
-
-/* Update this specific block in your style.css */
+/* Custom Icon Styling */
 .globe-leaf svg {
-    width: 24px;   /* Adjusted for visual parity with icons */
-    height: 24px;
+    width: 28px;
+    height: 28px;
     fill: currentColor;
-    display: inline-block;
-    vertical-align: middle;
 }
 
-
-/* MOBILE ADAPTATION */
+/* RESPONSIVE LAYOUT */
 @media (max-width: 900px) {
     .main-layout { flex-direction: column; }
     .sidebar, .content-area { width: 100%; border-right: none; padding: 10% 8%; }
