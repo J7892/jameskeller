@@ -70,6 +70,8 @@ body {
 
 .profile-img {
     width: 100%;
+    aspect-ratio: 4 / 5; /* This creates the slightly shorter portrait crop */
+    object-fit: cover; /* This makes sure the image fills the space without squishing */
     border-radius: 2px;
     filter: grayscale(100%);
     transition: filter 0.4s ease;
