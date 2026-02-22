@@ -103,9 +103,9 @@
         .recipe-card { background: var(--card-bg); padding: 24px; margin-top: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
         .recipe-card img { max-width: 100%; border-radius: 6px; margin-bottom: 15px; }
         
-        /* Nutrition Macros */
+        /* Nutrition */
         .macros-container { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .macro-badge { background: var(--nav-bg); padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; border: 1px solid var(--border-color); }
+        .macro-badge { background: var(--nav-bg); padding: 5px 12px; border-radius: 15px; font-size: 13px; font-weight: bold; border: 1px solid var(--border-color); display: inline-block; }
         
         .ingredient-tag { display: inline-block; background: var(--nav-bg); padding: 4px 8px; border-radius: 4px; font-size: 14px; margin: 2px; }
         .missing-tag { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
@@ -290,7 +290,7 @@
         function extractMacro(nutritionData, macroName) {
             if (!nutritionData || !nutritionData.nutrients) return "N/A";
             const macro = nutritionData.nutrients.find(n => n.name === macroName);
-            return macro ? `${Math.round(macro.amount)}${macro.unit}` : "N/A";
+            return macro ? `${Math.round(macro.amount)}` : "N/A";
         }
 
         function renderRecipeCards(recipeArray) {
@@ -301,10 +301,8 @@
             recipeArray.forEach(recipe => {
                 const isFav = favorites.some(f => f.id === recipe.id);
                 
+                // Only extract calories now
                 const cals = extractMacro(recipe.nutrition, "Calories");
-                const pro = extractMacro(recipe.nutrition, "Protein");
-                const carbs = extractMacro(recipe.nutrition, "Carbohydrates");
-                const fat = extractMacro(recipe.nutrition, "Fat");
 
                 const usedHtml = (recipe.usedIngredients || []).map(ing => `<span class="ingredient-tag">${ing.name}</span>`).join(' ');
                 const missingHtml = (recipe.missedIngredients || []).map(ing => 
@@ -316,10 +314,7 @@
                 card.innerHTML = `
                     <h2 style="margin-top: 0; margin-bottom: 10px;">${recipe.title}</h2>
                     <div class="macros-container">
-                        <span class="macro-badge">🔥 ${cals}</span>
-                        <span class="macro-badge">🥩 ${pro} Pro</span>
-                        <span class="macro-badge">🍞 ${carbs} Carb</span>
-                        <span class="macro-badge">🥑 ${fat} Fat</span>
+                        <span class="macro-badge">🔥 ${cals} Calories / serving</span>
                     </div>
                     <img src="${recipe.image}" alt="${recipe.title}">
                     <p><strong>Have:</strong> ${usedHtml || '<span style="color:#999">None</span>'}</p>
