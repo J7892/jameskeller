@@ -273,6 +273,11 @@
                 const response = await fetch(`https://api.spoonacular.com/recipes/random?number=1&apiKey=${API_KEY}`);
                 const data = await response.json();
 
+                // Check for API errors
+                if (!response.ok || data.status === "failure") {
+                    throw new Error(data.message || "API limit reached. Please try again tomorrow.");
+                }
+
                 if (!data.recipes || data.recipes.length === 0) throw new Error("Could not fetch a random recipe.");
 
                 let randomRecipe = data.recipes[0];
@@ -283,7 +288,7 @@
                 renderRecipeCards(currentSearchResults);
 
             } catch (error) {
-                contentAreaDiv.innerHTML = `<p style='color: red; text-align: center;'>Error: ${error.message}</p>`;
+                contentAreaDiv.innerHTML = `<p style='color: #e11d48; text-align: center; font-weight: 600;'>Error: ${error.message}</p>`;
             } finally {
                 loadingDiv.style.display = "none";
             }
@@ -314,10 +319,16 @@
             try {
                 const response = await fetch(url);
                 const data = await response.json();
+                
+                // Check for API errors
+                if (!response.ok || data.status === "failure") {
+                    throw new Error(data.message || "API limit reached. Please try again tomorrow.");
+                }
+
                 let recipes = data.results;
 
                 if (!recipes || recipes.length === 0) {
-                    contentAreaDiv.innerHTML = `<p style="color: #ff4b4b; text-align: center;">No recipes found.</p>`;
+                    contentAreaDiv.innerHTML = `<p style="color: #e11d48; text-align: center; font-weight: 600;">No recipes found.</p>`;
                     return;
                 }
 
@@ -331,7 +342,7 @@
                 currentSearchResults = recipes;
                 renderRecipeCards(currentSearchResults);
             } catch (error) {
-                contentAreaDiv.innerHTML = `<p style='color: red; text-align: center;'>Error: ${error.message}</p>`;
+                contentAreaDiv.innerHTML = `<p style='color: #e11d48; text-align: center; font-weight: 600;'>Error: ${error.message}</p>`;
             } finally {
                 loadingDiv.style.display = "none";
             }
@@ -354,7 +365,6 @@
 
                 const usedHtml = (recipe.usedIngredients || []).map(ing => `<span class="ingredient-tag">${ing.name}</span>`).join(' ');
                 
-                // Removed the Substitution button, kept the shopping cart
                 const missingHtml = (recipe.missedIngredients || []).map(ing => 
                     `<span class="ingredient-tag missing-tag">${ing.name} 
                         <button class="action-icon-btn" onclick="addToShoppingList('${ing.name.replace(/'/g, "\\'")}')" title="Add to List">🛒</button>
@@ -450,7 +460,6 @@
             document.getElementById('navFav').classList.contains('active') ? renderRecipeCards(favorites) : document.getElementById(`fav-btn-${recipeId}`).innerText = isFav ? "🤍 Save" : "❤️ Saved";
         }
 
-        // --- UPGRADED RECIPE FETCH LOGIC ---
         async function getFullRecipe(recipeId) {
             const btn = document.getElementById(`btn-${recipeId}`);
             const container = document.getElementById(`instructions-${recipeId}`);
@@ -458,13 +467,16 @@
             btn.innerText = "Loading...";
             
             try {
-                // Fetching the full /information endpoint instead of just instructions
                 const response = await fetch(`https://api.spoonacular.com/recipes/${recipeId}/information?apiKey=${API_KEY}`);
                 const data = await response.json();
                 
+                // Check for API errors
+                if (!response.ok || data.status === "failure") {
+                    throw new Error(data.message || "API limit reached. Please try again tomorrow.");
+                }
+                
                 let recipeHtml = "";
 
-                // 1. Add formatted Ingredients list
                 if (data.extendedIngredients && data.extendedIngredients.length > 0) {
                     recipeHtml += `<h3>Ingredients</h3><ul>`;
                     data.extendedIngredients.forEach(ing => {
@@ -473,7 +485,6 @@
                     recipeHtml += `</ul>`;
                 }
 
-                // 2. Add formatted Instructions list
                 if (data.analyzedInstructions && data.analyzedInstructions.length > 0 && data.analyzedInstructions[0].steps.length > 0) {
                     recipeHtml += `<h3>Instructions</h3><ol>`;
                     data.analyzedInstructions[0].steps.forEach(s => {
@@ -481,7 +492,6 @@
                     });
                     recipeHtml += `</ol>`;
                 } else if (data.instructions) {
-                    // Fallback if the API only has raw text instructions
                     recipeHtml += `<h3>Instructions</h3><div>${data.instructions}</div>`;
                 } else {
                     recipeHtml += "<p><em>No detailed instructions available.</em></p>";
@@ -493,7 +503,7 @@
                 
             } catch (error) {
                 container.style.display = "block"; 
-                container.innerHTML = "<p style='color: red;'>Failed to load recipe details.</p>";
+                container.innerHTML = `<p style='color: #e11d48;'>Error: ${error.message}</p>`;
                 btn.disabled = false; 
                 btn.innerText = "View Full Recipe";
             }
