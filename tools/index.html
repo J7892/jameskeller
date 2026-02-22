@@ -3,464 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Pantry Cook</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ff4b4b">
-    
+    <title>My Web Apps</title>
     <style>
         :root {
             --bg-color: #f4f6f8;
             --text-color: #333;
             --card-bg: white;
-            --border-color: #eaeaea;
-            --input-bg: white;
-            --input-border: #ccc;
-            --sub-text: #666;
-            --nav-bg: #eee;
-            --modal-bg: rgba(0,0,0,0.6);
-        }
-
-        body.dark-mode {
-            --bg-color: #121212;
-            --text-color: #e0e0e0;
-            --card-bg: #1e1e1e;
-            --border-color: #333;
-            --input-bg: #2d2d2d;
-            --input-border: #444;
-            --sub-text: #aaa;
-            --nav-bg: #2d2d2d;
-            --modal-bg: rgba(0,0,0,0.8);
+            --accent-color: #ff4b4b;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            max-width: 700px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
             background-color: var(--bg-color);
             color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
+            line-height: 1.6;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* The Grid System */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        /* App Cards */
+        .app-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #eaeaea;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        .app-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .app-title {
+            margin: 0 0 10px 0;
+            font-size: 1.4rem;
+        }
+
+        .app-desc {
+            color: #666;
+            margin-bottom: 25px;
+            flex-grow: 1;
+        }
+
+        /* The Launch Button */
+        .launch-btn {
+            display: inline-block;
+            text-align: center;
+            background-color: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .launch-btn:hover {
+            background-color: #e04343;
+        }
+
+        /* Coming Soon Styling */
+        .coming-soon {
+            border: 2px dashed #ccc;
+            background-color: transparent;
+            box-shadow: none;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            color: #999;
         }
         
-        /* Navigation & Header */
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        
-        .back-link { text-decoration: none; color: var(--text-color); background: var(--nav-bg); padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; border: 1px solid var(--border-color); transition: background 0.2s; }
-        .back-link:hover { opacity: 0.8; }
-        .theme-toggle { background: var(--nav-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background 0.2s; }
-        .theme-toggle:hover { opacity: 0.8; }
-        
-        /* Updated Top Nav to allow wrapping on small phone screens */
-        .top-nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 25px; background: var(--card-bg); padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .nav-btn { flex: 1; min-width: 100px; background: var(--nav-bg); color: var(--text-color); border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;}
-        .nav-btn.active { background: #ff4b4b; color: white; }
-        
-        .title-container { text-align: center; margin-bottom: 20px; }
-        h1 { margin: 0 0 5px 0; }
-        .subtitle { color: var(--sub-text); margin-bottom: 0; }
-        
-        /* Search Form Grid */
-        .search-container { background: var(--card-bg); padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; border: 1px solid var(--border-color); }
-        .full-width { grid-column: span 2; }
-        
-        label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 13px; color: var(--sub-text);}
-        input[type="text"], select { width: 100%; padding: 10px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-color); border-radius: 6px; box-sizing: border-box; font-size: 15px; }
-        
-        .main-search-btn { background-color: #ff4b4b; color: white; padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; width: 100%; }
-        
-        #loading { display: none; margin-top: 20px; color: var(--sub-text); font-style: italic; text-align: center; }
-        
-        /* Cards */
-        .recipe-card { background: var(--card-bg); padding: 24px; margin-top: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
-        .recipe-card img { max-width: 100%; border-radius: 6px; margin-bottom: 15px; }
-        
-        /* Nutrition */
-        .macros-container { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .macro-badge { background: var(--nav-bg); padding: 5px 12px; border-radius: 15px; font-size: 13px; font-weight: bold; border: 1px solid var(--border-color); display: inline-block; }
-        
-        .ingredient-tag { display: inline-block; background: var(--nav-bg); padding: 4px 8px; border-radius: 4px; font-size: 14px; margin: 2px; }
-        .missing-tag { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
-        body.dark-mode .missing-tag { background: #4a2c00; border-color: #e65100; color: #ffb74d; }
-        
-        .action-icon-btn { background: none; border: none; cursor: pointer; padding: 0 4px; font-size: 14px; margin-left: 2px;}
-        .action-icon-btn:hover { transform: scale(1.2); }
-        
-        /* Action Buttons */
-        .action-buttons { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-secondary { background-color: var(--nav-bg); color: var(--text-color); flex: 2; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;}
-        .btn-fav { background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2; flex: 1; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;}
-        body.dark-mode .btn-fav { background-color: #4a1515; border-color: #c62828; color: #ffcdd2; }
-        
-        .instructions-container { margin-top: 15px; padding: 15px; background-color: var(--input-bg); border-left: 4px solid #ff4b4b; border-radius: 0 4px 4px 0; font-size: 15px; line-height: 1.5; }
-        
-        /* Shopping List View */
-        .shopping-item { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; border: 1px solid var(--border-color); }
-        .shop-actions { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-share { background: #4CAF50; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-weight: bold;}
-        .btn-clear { background: #666; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-weight: bold;}
+        .coming-soon:hover {
+            transform: none;
+            box-shadow: none;
+        }
 
-        /* Substitute Modal */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: var(--card-bg); padding: 25px; border-radius: 12px; max-width: 400px; width: 90%; position: relative; border: 1px solid var(--border-color); }
-        .modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-color); line-height: 1;}
     </style>
 </head>
 <body>
 
-    <div class="header-top">
-        <a href="index.html" class="back-link">← Back</a>
-        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
-    </div>
-    
-    <div class="title-container">
-        <h1>Pantry Cook 🍳</h1>
-        <p class="subtitle" id="pageSubtitle">Search by what you have, what you crave, or both.</p>
-    </div>
-    
-    <div class="top-nav">
-        <button id="navSearch" class="nav-btn active" onclick="switchView('search')">🔍 Search</button>
-        <button id="navRandom" class="nav-btn" onclick="getRandomRecipe()">🎲 Surprise Me</button>
-        <button id="navFav" class="nav-btn" onclick="switchView('favorites')">❤️ Saved</button>
-        <button id="navShop" class="nav-btn" onclick="switchView('shopping')">🛒 List</button>
-    </div>
+    <header>
+        <h2>Appz 🚀</h2>
+        </header>
 
-    <div id="searchView">
-        <div class="search-container">
-            <div class="full-width">
-                <label for="ingredientsInput">Pantry Ingredients (Comma separated)</label>
-                <input type="text" id="ingredientsInput" placeholder="e.g., chicken, rice, garlic">
-            </div>
-            <div>
-                <label for="keywordInput">Keyword / Dish</label>
-                <input type="text" id="keywordInput" placeholder="e.g., Pasta, Tacos">
-            </div>
-            <div>
-                <label for="cuisineSelect">Cuisine</label>
-                <select id="cuisineSelect">
-                    <option value="">Any</option><option value="italian">Italian</option><option value="mexican">Mexican</option><option value="asian">Asian</option><option value="american">American</option>
-                </select>
-            </div>
-            <div>
-                <label for="dietSelect">Dietary Preference</label>
-                <select id="dietSelect">
-                    <option value="">None</option><option value="vegetarian">Vegetarian</option><option value="vegan">Vegan</option><option value="gluten free">Gluten Free</option><option value="ketogenic">Keto</option>
-                </select>
-            </div>
-            <div>
-                <label for="sortSelect">Sort Results By</label>
-                <select id="sortSelect">
-                    <option value="max-used-ingredients">Best Ingredient Match</option>
-                    <option value="popularity">Most Popular</option>
-                    <option value="time">Quickest to Make</option>
-                </select>
-            </div>
-            <div class="full-width">
-                <button class="main-search-btn" onclick="findRecipes()">Search Recipes</button>
-            </div>
+    <div class="app-grid">
+        
+        <div class="app-card">
+            <a href="recipe.html" class="launch-btn"><h3 class="app-title">🍳 Recipes</h3></a>
         </div>
+
     </div>
 
-    <div id="loading">Working on it...</div>
-    <div id="contentArea"></div>
-
-    <div id="subModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close" onclick="document.getElementById('subModal').style.display='none'">&times;</button>
-            <h3 style="margin-top: 0; margin-bottom: 15px;">Ingredient Swap 🔄</h3>
-            <p id="subModalText" style="line-height: 1.5; margin: 0;"></p>
-        </div>
-    </div>
-
-    <script>
-        const API_KEY = "b2d4c3c14d3443d19e9fd07f3cceefea"; 
-        const equipmentFilter = ["skillet", "pan", "pot", "bowl", "oven", "sheet", "foil", "knife", "board", "blender", "processor", "dish", "plate"];
-
-        let currentSearchResults = [];
-        let favorites = JSON.parse(localStorage.getItem("pantryFavorites")) || [];
-        let shoppingList = JSON.parse(localStorage.getItem("pantryShoppingList")) || [];
-
-        // --- DARK MODE LOGIC ---
-        function initTheme() {
-            if (localStorage.getItem("darkMode") === "true") {
-                document.body.classList.add("dark-mode");
-                document.getElementById("themeBtn").innerText = "☀️ Light Mode";
-            }
-        }
-        function toggleTheme() {
-            document.body.classList.toggle("dark-mode");
-            const isDark = document.body.classList.contains("dark-mode");
-            localStorage.setItem("darkMode", isDark);
-            document.getElementById("themeBtn").innerText = isDark ? "☀️ Light Mode" : "🌙 Dark Mode";
-        }
-        initTheme();
-
-        // --- PWA SERVICE WORKER REGISTRATION ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('ServiceWorker failed: ', err));
-            });
-        }
-
-        // --- NAVIGATION ---
-        function switchView(viewName) {
-            ['navSearch', 'navRandom', 'navFav', 'navShop'].forEach(id => document.getElementById(id).classList.remove('active'));
-            document.getElementById('searchView').style.display = 'none';
-            const subtitle = document.getElementById('pageSubtitle');
-
-            if (viewName === 'search') {
-                document.getElementById('navSearch').classList.add('active');
-                document.getElementById('searchView').style.display = 'block';
-                subtitle.innerText = "Search by what you have, what you crave, or both.";
-                renderRecipeCards(currentSearchResults);
-            } else if (viewName === 'favorites') {
-                document.getElementById('navFav').classList.add('active');
-                subtitle.innerText = "Your saved recipes.";
-                renderRecipeCards(favorites);
-            } else if (viewName === 'shopping') {
-                document.getElementById('navShop').classList.add('active');
-                subtitle.innerText = "Items to buy on your next grocery run.";
-                renderShoppingList();
-            } else if (viewName === 'random') {
-                document.getElementById('navRandom').classList.add('active');
-                subtitle.innerText = "Here is a random recipe to inspire you!";
-            }
-        }
-
-        // --- SURPRISE ME (RANDOM RECIPE) LOGIC ---
-        async function getRandomRecipe() {
-            switchView('random');
-            const contentAreaDiv = document.getElementById("contentArea");
-            const loadingDiv = document.getElementById("loading");
-
-            contentAreaDiv.innerHTML = "";
-            loadingDiv.style.display = "block";
-
-            try {
-                const response = await fetch(`https://api.spoonacular.com/recipes/random?number=1&apiKey=${API_KEY}`);
-                const data = await response.json();
-
-                if (!data.recipes || data.recipes.length === 0) throw new Error("Could not fetch a random recipe.");
-
-                let randomRecipe = data.recipes[0];
-                
-                // Format the random recipe data to match our standard search results
-                randomRecipe.usedIngredients = randomRecipe.extendedIngredients || [];
-                randomRecipe.missedIngredients = []; 
-
-                currentSearchResults = [randomRecipe];
-                renderRecipeCards(currentSearchResults);
-
-            } catch (error) {
-                contentAreaDiv.innerHTML = `<p style='color: red; text-align: center;'>Error: ${error.message}</p>`;
-            } finally {
-                loadingDiv.style.display = "none";
-            }
-        }
-
-        // --- SMART SUBSTITUTIONS LOGIC ---
-        async function findSubstitute(ingredientName) {
-            const modal = document.getElementById('subModal');
-            const modalText = document.getElementById('subModalText');
-            
-            modal.style.display = 'flex';
-            modalText.innerHTML = `<em>Searching database for ${ingredientName} substitutes...</em>`;
-            
-            try {
-                const response = await fetch(`https://api.spoonacular.com/food/ingredients/substitutes?ingredientName=${encodeURIComponent(ingredientName)}&apiKey=${API_KEY}`);
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    modalText.innerHTML = `<strong>Need to swap out ${ingredientName}?</strong><br><br>${data.message}`;
-                } else {
-                    modalText.innerHTML = `Sorry, the database does not have a standard substitute for <strong>${ingredientName}</strong>.`;
-                }
-            } catch (error) {
-                modalText.innerHTML = `<span style="color:red;">Failed to connect to substitute database.</span>`;
-            }
-        }
-
-        // --- SEARCH & NUTRITION API LOGIC ---
-        async function findRecipes() {
-            const ingredients = document.getElementById("ingredientsInput").value.split(',').map(i => i.trim()).filter(i => i);
-            const keyword = document.getElementById("keywordInput").value.trim();
-            const cuisine = document.getElementById("cuisineSelect").value;
-            const diet = document.getElementById("dietSelect").value;
-            const sort = document.getElementById("sortSelect").value;
-            const contentAreaDiv = document.getElementById("contentArea");
-            const loadingDiv = document.getElementById("loading");
-
-            if (ingredients.length === 0 && !keyword && !cuisine && !diet) return;
-
-            switchView('search'); // Ensure nav highlights search
-            contentAreaDiv.innerHTML = "";
-            loadingDiv.style.display = "block";
-
-            let url = `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&fillIngredients=true&addRecipeNutrition=true&number=10&ignorePantry=true`;
-            if (ingredients.length > 0) url += `&includeIngredients=${ingredients.join(',')}`;
-            if (keyword) url += `&query=${encodeURIComponent(keyword)}`;
-            if (cuisine) url += `&cuisine=${cuisine}`;
-            if (diet) url += `&diet=${diet}`;
-            if (sort) url += `&sort=${sort}`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                let recipes = data.results;
-
-                if (!recipes || recipes.length === 0) {
-                    contentAreaDiv.innerHTML = `<p style="color: #ff4b4b; text-align: center;">No recipes found.</p>`;
-                    return;
-                }
-
-                recipes.forEach(recipe => {
-                    recipe.missedIngredients = (recipe.missedIngredients || []).filter(ing => {
-                        const name = ing.name.toLowerCase();
-                        return !equipmentFilter.some(tool => name.includes(tool)) && ing.aisle !== "Equipment";
-                    });
-                });
-
-                currentSearchResults = recipes;
-                renderRecipeCards(currentSearchResults);
-            } catch (error) {
-                contentAreaDiv.innerHTML = `<p style='color: red; text-align: center;'>Error: ${error.message}</p>`;
-            } finally {
-                loadingDiv.style.display = "none";
-            }
-        }
-
-        function extractMacro(nutritionData, macroName) {
-            if (!nutritionData || !nutritionData.nutrients) return "N/A";
-            const macro = nutritionData.nutrients.find(n => n.name === macroName);
-            return macro ? `${Math.round(macro.amount)}` : "N/A";
-        }
-
-        function renderRecipeCards(recipeArray) {
-            const container = document.getElementById("contentArea");
-            container.innerHTML = "";
-            if (recipeArray.length === 0) return;
-
-            recipeArray.forEach(recipe => {
-                const isFav = favorites.some(f => f.id === recipe.id);
-                const cals = extractMacro(recipe.nutrition, "Calories");
-
-                const usedHtml = (recipe.usedIngredients || []).map(ing => `<span class="ingredient-tag">${ing.name}</span>`).join(' ');
-                
-                // Added the Substitution (🔄) button next to the Cart button
-                const missingHtml = (recipe.missedIngredients || []).map(ing => 
-                    `<span class="ingredient-tag missing-tag">${ing.name} 
-                        <button class="action-icon-btn" onclick="findSubstitute('${ing.name.replace(/'/g, "\\'")}')" title="Find Substitute">🔄</button>
-                        <button class="action-icon-btn" onclick="addToShoppingList('${ing.name.replace(/'/g, "\\'")}')" title="Add to List">🛒</button>
-                    </span>`
-                ).join(' ');
-
-                const card = document.createElement("div");
-                card.className = "recipe-card";
-                card.innerHTML = `
-                    <h2 style="margin-top: 0; margin-bottom: 10px;">${recipe.title}</h2>
-                    <div class="macros-container">
-                        <span class="macro-badge">🔥 ${cals} Calories / serving</span>
-                    </div>
-                    <img src="${recipe.image}" alt="${recipe.title}">
-                    <p><strong>Ingredients:</strong> ${usedHtml || '<span style="color:#999">None</span>'}</p>
-                    ${(recipe.missedIngredients && recipe.missedIngredients.length > 0) ? `<p><strong>Need:</strong> ${missingHtml}</p>` : ''}
-                    
-                    <div class="action-buttons">
-                        <button class="btn-secondary" id="btn-${recipe.id}" onclick="getInstructions(${recipe.id})">View Instructions</button>
-                        <button class="btn-fav" id="fav-btn-${recipe.id}" onclick="toggleFavorite(${recipe.id})">${isFav ? "❤️ Saved" : "🤍 Save"}</button>
-                    </div>
-                    <div id="instructions-${recipe.id}" class="instructions-container" style="display: none;"></div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // --- SMART SHOPPING LIST ---
-        function addToShoppingList(item) {
-            if (!shoppingList.some(i => i.toLowerCase() === item.toLowerCase())) {
-                shoppingList.push(item);
-                localStorage.setItem("pantryShoppingList", JSON.stringify(shoppingList));
-                alert(`Added ${item} to list!`);
-            }
-        }
-        function removeFromShoppingList(index) {
-            shoppingList.splice(index, 1);
-            localStorage.setItem("pantryShoppingList", JSON.stringify(shoppingList));
-            renderShoppingList();
-        }
-        function clearShoppingList() {
-            if(confirm("Are you sure you want to clear your entire list?")) {
-                shoppingList = [];
-                localStorage.setItem("pantryShoppingList", JSON.stringify(shoppingList));
-                renderShoppingList();
-            }
-        }
-        async function shareShoppingList() {
-            if (shoppingList.length === 0) return alert("Your list is empty!");
-            const shareText = "🛒 Grocery List:\n- " + shoppingList.join("\n- ");
-            if (navigator.share) {
-                try { await navigator.share({ title: 'My Grocery List', text: shareText }); } 
-                catch (err) { console.log('Error sharing', err); }
-            } else {
-                navigator.clipboard.writeText(shareText);
-                alert("List copied to clipboard!");
-            }
-        }
-
-        function renderShoppingList() {
-            const container = document.getElementById("contentArea");
-            container.innerHTML = "";
-            if (shoppingList.length === 0) {
-                container.innerHTML = `<p style="text-align: center; color: var(--sub-text);">Your shopping list is empty!</p>`;
-                return;
-            }
-
-            container.innerHTML = `
-                <div class="shop-actions">
-                    <button class="btn-share" onclick="shareShoppingList()">📤 Share List</button>
-                    <button class="btn-clear" onclick="clearShoppingList()">🗑️ Clear All</button>
-                </div>
-            `;
-
-            shoppingList.forEach((item, index) => {
-                const div = document.createElement("div");
-                div.className = "shopping-item";
-                div.innerHTML = `
-                    <span style="font-weight: bold; font-size: 16px;">🛒 ${item}</span>
-                    <button class="btn-clear" style="flex: 0; padding: 5px 10px;" onclick="removeFromShoppingList(${index})">X</button>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // --- FAVORITES & INSTRUCTIONS ---
-        function toggleFavorite(recipeId) {
-            const isFav = favorites.some(f => f.id === recipeId);
-            if (isFav) favorites = favorites.filter(f => f.id !== recipeId);
-            else {
-                const recipeToSave = currentSearchResults.find(r => r.id === recipeId) || favorites.find(r => r.id === recipeId);
-                if (recipeToSave) favorites.push(recipeToSave);
-            }
-            localStorage.setItem("pantryFavorites", JSON.stringify(favorites));
-            document.getElementById('navFav').classList.contains('active') ? renderRecipeCards(favorites) : document.getElementById(`fav-btn-${recipeId}`).innerText = isFav ? "🤍 Save" : "❤️ Saved";
-        }
-
-        async function getInstructions(recipeId) {
-            const btn = document.getElementById(`btn-${recipeId}`);
-            const container = document.getElementById(`instructions-${recipeId}`);
-            btn.disabled = true; btn.innerText = "Loading...";
-            try {
-                const response = await fetch(`https://api.spoonacular.com/recipes/${recipeId}/analyzedInstructions?apiKey=${API_KEY}`);
-                const data = await response.json();
-                container.style.display = "block"; 
-                if (data.length > 0 && data[0].steps.length > 0) {
-                    container.innerHTML = "<ol>" + data[0].steps.map(s => `<li>${s.step}</li>`).join('') + "</ol>";
-                } else container.innerHTML = "<p><em>No detailed instructions available.</em></p>";
-                btn.style.display = "none"; 
-            } catch (error) {
-                container.style.display = "block"; container.innerHTML = "<p style='color: red;'>Failed to load.</p>";
-                btn.disabled = false; btn.innerText = "View Instructions";
-            }
-        }
-    </script>
 </body>
 </html>
