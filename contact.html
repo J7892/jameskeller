@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | James Keller</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=18">
+
+    <style>
+        .contact-wrap {
+            max-width: 520px;
+            width: 100%;
+            padding: 3rem 1.5rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: inherit;
+            opacity: 0.45;
+            margin-bottom: 2.5rem;
+            transition: opacity 0.15s;
+        }
+
+        .back-link:hover { opacity: 0.8; }
+
+        .contact-heading {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-sub {
+            font-size: 0.85rem;
+            font-weight: 300;
+            opacity: 0.5;
+            margin-bottom: 2.5rem;
+            line-height: 1.5;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-field label {
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 400;
+            opacity: 0.5;
+        }
+
+        .form-field input,
+        .form-field textarea {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid currentColor;
+            opacity: 0.6;
+            border-radius: 0;
+            padding: 0.5rem 0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 300;
+            color: inherit;
+            width: 100%;
+            outline: none;
+            transition: opacity 0.15s;
+            -webkit-appearance: none;
+        }
+
+        .form-field input:focus,
+        .form-field textarea:focus {
+            opacity: 1;
+        }
+
+        .form-field textarea {
+            resize: none;
+            height: 120px;
+            line-height: 1.6;
+        }
+
+        .form-field input::placeholder,
+        .form-field textarea::placeholder {
+            opacity: 0.35;
+            font-weight: 300;
+        }
+
+        .submit-btn {
+            margin-top: 0.75rem;
+            background: transparent;
+            border: 1px solid currentColor;
+            color: inherit;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 400;
+            padding: 0.65rem 1.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+
+        .submit-btn:hover { opacity: 1; }
+
+        .success-msg {
+            display: none;
+            font-size: 0.9rem;
+            font-weight: 300;
+            opacity: 0.7;
+            margin-top: 1.5rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-layout" style="justify-content: center; align-items: flex-start;">
+        <div class="contact-wrap">
+
+            <a href="/" class="back-link">&#8592; James Keller</a>
+
+            <h1 class="contact-heading">Get in touch</h1>
+            <p class="contact-sub">For tips, story ideas, or general inquiries.</p>
+
+            <form id="contact-form" action="https://formspree.io/f/mlgoyzzz" method="POST">
+                <div class="form-field">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" placeholder="Your name" required>
+                </div>
+                <div class="form-field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-field">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" placeholder="What's on your mind?" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Send message</button>
+            </form>
+
+            <p class="success-msg" id="success-msg">Thanks — your message has been sent. I'll be in touch if I can.</p>
+
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('contact-form');
+        const success = document.getElementById('success-msg');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const data = new FormData(form);
+            const res = await fetch(form.action, {
+                method: 'POST',
+                body: data,
+                headers: { 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+                form.style.display = 'none';
+                success.style.display = 'block';
+            }
+        });
+    </script>
+
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"d12832f8be4340d0b5a7e4622ec2f2c9","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
