@@ -107,6 +107,9 @@ body {
     opacity: 1;
     transform: translateY(-4px);
 }
+.social-icons a[title="The Globe and Mail"]:hover {
+    color: #CD2027;
+}
 ::selection {
     background-color: var(--accent);
     color: var(--bg);
