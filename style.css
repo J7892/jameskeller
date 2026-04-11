@@ -115,8 +115,14 @@ body {
     color: var(--bg);
 }
 @media (max-width: 900px) {
-    .main-layout { flex-direction: column; }
+    .main-layout {
+        flex-direction: column;
+        min-height: unset;
+    }
     .sidebar, .content-area { width: 100%; border-right: none; padding: 10% 8%; }
+    .sticky-content {
+        position: static;
+    }
     .hero-name { font-size: 3.5rem; }
     .social-icons { justify-content: flex-start; }
     
