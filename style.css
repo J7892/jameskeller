@@ -16,8 +16,10 @@ body {
     background-color: var(--bg);
     color: var(--text);
     overflow-x: hidden;
-    scrollbar-gutter: stable; 
+    scrollbar-gutter: stable;
     min-height: -webkit-fill-available;
+    overscroll-behavior: none;
+    overflow-anchor: none;
 }
 .main-layout {
     display: flex;
@@ -143,7 +145,7 @@ body {
         transform: none;
     }
     .profile-img {
-        aspect-ratio: 1 / 1; 
+        aspect-ratio: 1 / 1;
         object-fit: cover;
     }
 }
