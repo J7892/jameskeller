@@ -120,7 +120,20 @@ body {
         flex-direction: column;
         min-height: unset;
     }
-    .sidebar, .content-area { width: 100%; border-right: none; padding: 10% 8%; }
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        padding: 10% 8%;
+        opacity: 1;
+        animation: none;
+    }
+    .content-area {
+        width: 100%;
+        border-right: none;
+        padding: 10% 8%;
+        opacity: 1;
+        animation: none;
+    }
     .sticky-content {
         position: static;
     }
