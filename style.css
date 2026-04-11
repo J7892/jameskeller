@@ -125,7 +125,9 @@ body {
     }
     .hero-name { font-size: 3.5rem; }
     .social-icons { justify-content: flex-start; }
-    
+    .social-icons a:hover {
+        transform: none;
+    }
     .profile-img {
         aspect-ratio: 1 / 1; 
         object-fit: cover;
