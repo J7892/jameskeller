@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copy Diff Checker</title>
+    <title>Copy Diff Checker 353p</title>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -230,6 +230,7 @@
 
             const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
 
+            // Route appropriately: Inline gets words/chars, Side-by-Side gets lines to align blocks properly
             if (viewMode === 'inline') {
                 const diffResults = diffFn(originalText, modifiedText);
                 renderInline(diffResults, outputDiv);
