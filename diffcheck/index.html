@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private Text Diff</title>
+    <title>Copy Diff Checker</title>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -14,6 +14,20 @@
             padding: 0 1rem;
             background-color: #ffffff;
             color: #000000;
+        }
+        
+        /* Input Layout */
+        .input-labels {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+        .label-half {
+            width: 50%;
         }
         .input-container {
             display: flex;
@@ -30,6 +44,8 @@
             border-radius: 0;
             resize: vertical;
         }
+
+        /* Controls */
         .controls {
             display: flex;
             justify-content: space-between;
@@ -40,7 +56,17 @@
         }
         .options {
             display: flex;
-            gap: 1.5rem;
+            gap: 2.5rem;
+        }
+        .option-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            font-size: 14px;
+        }
+        .option-group strong {
+            text-transform: uppercase;
+            font-size: 12px;
         }
         .btn-group {
             display: flex;
@@ -76,10 +102,10 @@
 
         /* Inline Layout PDF Fixes */
         .diff-paragraph {
-            page-break-inside: avoid; /* Prevents PDF from cutting the paragraph in half */
+            page-break-inside: avoid; 
             white-space: pre-wrap;
             word-break: break-word;
-            min-height: 1.5em; /* Ensures empty newlines still take up space */
+            min-height: 1.5em; 
         }
 
         /* Table Layout for Side-by-Side */
@@ -91,7 +117,7 @@
             word-break: break-word;
         }
         .diff-table tr {
-            page-break-inside: avoid; /* Prevents PDF from cutting rows in half */
+            page-break-inside: avoid; 
         }
         .diff-table th {
             width: 50%;
@@ -133,19 +159,36 @@
 
     <h2>Private Text Comparator</h2>
     
+    <div class="input-labels">
+        <div class="label-half">Original Text</div>
+        <div class="label-half">Changed Text</div>
+    </div>
     <div class="input-container">
-        <textarea id="original" placeholder="Original text..."></textarea>
-        <textarea id="modified" placeholder="Modified text..."></textarea>
+        <textarea id="original" placeholder="Paste original text here..."></textarea>
+        <textarea id="modified" placeholder="Paste changed text here..."></textarea>
     </div>
 
     <div class="controls">
         <div class="options">
-            <label>
-                <input type="radio" name="viewMode" value="inline" onchange="compareTexts()" checked> Inline View
-            </label>
-            <label>
-                <input type="radio" name="viewMode" value="split" onchange="compareTexts()"> Side-by-Side
-            </label>
+            <div class="option-group">
+                <strong>View:</strong>
+                <label>
+                    <input type="radio" name="viewMode" value="inline" onchange="compareTexts()" checked> Inline
+                </label>
+                <label>
+                    <input type="radio" name="viewMode" value="split" onchange="compareTexts()"> Side-by-Side
+                </label>
+            </div>
+            
+            <div class="option-group">
+                <strong>Match:</strong>
+                <label>
+                    <input type="radio" name="matchMode" value="word" onchange="compareTexts()" checked> By Word
+                </label>
+                <label>
+                    <input type="radio" name="matchMode" value="letter" onchange="compareTexts()"> By Letter
+                </label>
+            </div>
         </div>
         <div class="btn-group">
             <button onclick="compareTexts()">Compare Texts</button>
@@ -162,7 +205,9 @@
             const originalText = document.getElementById('original').value;
             const modifiedText = document.getElementById('modified').value;
             const outputDiv = document.getElementById('output');
+            
             const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
+            const matchMode = document.querySelector('input[name="matchMode"]:checked').value;
             
             outputDiv.innerHTML = '';
             outputDiv.className = ''; 
@@ -172,27 +217,28 @@
                 return;
             }
 
+            // Determine whether to diff by words or individual characters
+            const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
+
             if (viewMode === 'inline') {
-                const diffResults = Diff.diffWords(originalText, modifiedText);
+                const diffResults = diffFn(originalText, modifiedText);
                 renderInline(diffResults, outputDiv);
             } else {
-                const diffResults = Diff.diffLines(originalText, modifiedText);
-                renderSplit(diffResults, outputDiv);
+                // For split view, we still diff by lines first to keep the table rows aligned
+                const lineResults = Diff.diffLines(originalText, modifiedText);
+                renderSplit(lineResults, outputDiv, diffFn);
             }
         }
 
         function renderInline(diffResults, container) {
-            // Create the first paragraph container
             let currentParagraph = document.createElement('div');
             currentParagraph.className = 'diff-paragraph';
             container.appendChild(currentParagraph);
 
             diffResults.forEach((part) => {
-                // Split the text block by newlines to catch paragraph breaks
                 const lines = part.value.split('\n');
                 
                 lines.forEach((line, index) => {
-                    // If we hit a newline, create a new paragraph block
                     if (index > 0) {
                         currentParagraph = document.createElement('div');
                         currentParagraph.className = 'diff-paragraph';
@@ -212,15 +258,9 @@
             });
         }
 
-        function renderSplit(diffResults, container) {
+        function renderSplit(diffResults, container, diffFn) {
             const table = document.createElement('table');
             table.className = 'diff-table';
-            
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            headerRow.innerHTML = '<th>Original (Deletions)</th><th>Modified (Additions)</th>';
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
             
             const tbody = document.createElement('tbody');
             
@@ -228,6 +268,7 @@
             while (i < diffResults.length) {
                 const part = diffResults[i];
                 
+                // If a line was removed and immediately replaced by an added line (a modification)
                 if (part.removed && i + 1 < diffResults.length && diffResults[i+1].added) {
                     const addedPart = diffResults[i+1];
                     const removedLines = part.value.replace(/\n$/, '').split('\n');
@@ -236,21 +277,48 @@
                     
                     for (let j = 0; j < maxLines; j++) {
                         const tr = document.createElement('tr');
-                        
                         const tdLeft = document.createElement('td');
-                        if (j < removedLines.length) {
-                            tdLeft.className = 'removed';
-                            tdLeft.textContent = removedLines[j];
-                        } else {
-                            tdLeft.className = 'empty';
-                        }
-                        
                         const tdRight = document.createElement('td');
-                        if (j < addedLines.length) {
-                            tdRight.className = 'added';
-                            tdRight.textContent = addedLines[j];
+                        
+                        // If both lines exist across from each other, run the word/letter diff INSIDE the row
+                        if (j < removedLines.length && j < addedLines.length) {
+                            const innerDiff = diffFn(removedLines[j], addedLines[j]);
+                            
+                            innerDiff.forEach(innerPart => {
+                                if (innerPart.removed) {
+                                    const span = document.createElement('span');
+                                    span.className = 'removed';
+                                    span.textContent = innerPart.value;
+                                    tdLeft.appendChild(span);
+                                } else if (innerPart.added) {
+                                    const span = document.createElement('span');
+                                    span.className = 'added';
+                                    span.textContent = innerPart.value;
+                                    tdRight.appendChild(span);
+                                } else {
+                                    tdLeft.appendChild(document.createTextNode(innerPart.value));
+                                    tdRight.appendChild(document.createTextNode(innerPart.value));
+                                }
+                            });
                         } else {
-                            tdRight.className = 'empty';
+                            // If it's an uneven modification (e.g. replaced 1 line with 2 lines)
+                            if (j < removedLines.length) {
+                                const span = document.createElement('span');
+                                span.className = 'removed';
+                                span.textContent = removedLines[j];
+                                tdLeft.appendChild(span);
+                            } else {
+                                tdLeft.className = 'empty';
+                            }
+                            
+                            if (j < addedLines.length) {
+                                const span = document.createElement('span');
+                                span.className = 'added';
+                                span.textContent = addedLines[j];
+                                tdRight.appendChild(span);
+                            } else {
+                                tdRight.className = 'empty';
+                            }
                         }
                         
                         tr.appendChild(tdLeft);
@@ -259,6 +327,7 @@
                     }
                     i += 2; 
                 } else {
+                    // Standard un-modified lines, or stand-alone additions/deletions
                     const lines = part.value.replace(/\n$/, '').split('\n');
                     lines.forEach(line => {
                         const tr = document.createElement('tr');
@@ -267,16 +336,18 @@
                         
                         if (part.added) {
                             tdLeft.className = 'empty'; 
-                            tdRight.className = 'added';
-                            tdRight.textContent = line;
+                            const span = document.createElement('span');
+                            span.className = 'added';
+                            span.textContent = line;
+                            tdRight.appendChild(span);
                         } else if (part.removed) {
-                            tdLeft.className = 'removed';
-                            tdLeft.textContent = line;
+                            const span = document.createElement('span');
+                            span.className = 'removed';
+                            span.textContent = line;
+                            tdLeft.appendChild(span);
                             tdRight.className = 'empty'; 
                         } else {
-                            tdLeft.className = 'unchanged';
                             tdLeft.textContent = line;
-                            tdRight.className = 'unchanged';
                             tdRight.textContent = line;
                         }
                         
@@ -292,32 +363,22 @@
             container.appendChild(table);
         }
 
-        
         function exportToPDF() {
             const element = document.getElementById('pdf-container');
-            
-            // Temporarily remove the border so the PDF can calculate page breaks cleanly
             element.style.border = 'none';
 
             const opt = {
                 margin:       0.5,
                 filename:     'text-comparison.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
-                    scale: 2,
-                    scrollY: 0, // Forces the capture to start at the absolute top
-                    windowY: 0  // Resets the window context to prevent offset
-                },
+                html2canvas:  { scale: 2, scrollY: 0, windowY: 0 },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
                 pagebreak:    { mode: ['css', 'legacy'] } 
             };
-
-            // Generate the PDF, then restore the border once it finishes downloading
             html2pdf().set(opt).from(element).save().then(() => {
                 element.style.border = ''; 
             });
         }
-        
     </script>
 </body>
 </html>
