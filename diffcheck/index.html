@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copy Diff Checker</title>
+    <title>Copy Diff Checker 344pm</title>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -94,7 +94,7 @@
             white-space: pre-wrap;
             word-break: break-word;
             min-height: 1.5em; 
-            margin-bottom: 1em; /* Creates natural paragraph spacing */
+            margin-bottom: 1em; 
         }
 
         /* Table Layout for Side-by-Side */
@@ -195,6 +195,23 @@
                        .replace(/ +$/g, match => '\u00A0'.repeat(match.length));
         }
 
+        // Helper function to score how similar two lines/paragraphs are for Side-by-Side alignment
+        function getSimilarity(s1, s2) {
+            if (!s1 && !s2) return 1; 
+            if (!s1 || !s2) return 0;
+            const w1 = s1.toLowerCase().split(/[\s,.-]+/);
+            const w2 = s2.toLowerCase().split(/[\s,.-]+/);
+            let matchCount = 0;
+            const set2 = new Set(w2);
+            for (const w of w1) {
+                if (w && set2.has(w)) {
+                    matchCount++;
+                    set2.delete(w); 
+                }
+            }
+            return matchCount / Math.max(w1.length, w2.length);
+        }
+
         function compareTexts() {
             const originalText = document.getElementById('original').value;
             const modifiedText = document.getElementById('modified').value;
@@ -211,14 +228,14 @@
                 return;
             }
 
-            // Using diffWords or diffChars as the absolute foundation for both views
             const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
-            const diffResults = diffFn(originalText, modifiedText);
 
             if (viewMode === 'inline') {
+                const diffResults = diffFn(originalText, modifiedText);
                 renderInline(diffResults, outputDiv);
             } else {
-                renderSplit(diffResults, outputDiv);
+                const lineResults = Diff.diffLines(originalText, modifiedText);
+                renderSplit(lineResults, outputDiv, diffFn);
             }
         }
 
@@ -228,8 +245,8 @@
             container.appendChild(currentParagraph);
 
             diffResults.forEach((part) => {
-                // Safely split ONLY by double newlines so soft carriage returns stay within the same block
-                const chunks = part.value.split(/\n{2,}/);
+                // Split purely by true paragraph breaks (double newlines)
+                const chunks = part.value.replace(/\r/g, '').split(/\n{2,}/);
                 
                 chunks.forEach((chunk, index) => {
                     if (index > 0) {
@@ -244,80 +261,154 @@
                         else if (part.removed) span.className = 'removed';
                         else span.className = 'unchanged';
                         
-                        span.textContent = preserveSpaces(chunk);
+                        // Treat single hidden newlines as spaces so the text flows naturally
+                        const flowingText = chunk.replace(/\n/g, ' ');
+                        span.textContent = preserveSpaces(flowingText);
                         currentParagraph.appendChild(span);
                     }
                 });
             });
         }
 
-        function renderSplit(diffResults, container) {
+        function renderSplit(diffResults, container, diffFn) {
             const table = document.createElement('table');
             table.className = 'diff-table';
+            
             const tbody = document.createElement('tbody');
-            table.appendChild(tbody);
-
-            let tr = document.createElement('tr');
-            let tdLeft = document.createElement('td');
-            let tdRight = document.createElement('td');
-            tr.appendChild(tdLeft);
-            tr.appendChild(tdRight);
-            tbody.appendChild(tr);
-
-            diffResults.forEach(part => {
-                // Slicing the word-diff output strictly at newlines to create synchronized table rows
-                const lines = part.value.split('\n');
+            
+            let i = 0;
+            while (i < diffResults.length) {
+                const part = diffResults[i];
                 
-                for (let i = 0; i < lines.length; i++) {
-                    const lineText = lines[i];
+                // If we detect a modification block (removed lines immediately followed by added lines)
+                if (part.removed && i + 1 < diffResults.length && diffResults[i+1].added) {
+                    const addedPart = diffResults[i+1];
+                    const removedLines = part.value.replace(/\n$/, '').split('\n');
+                    const addedLines = addedPart.value.replace(/\n$/, '').split('\n');
                     
-                    if (lineText) {
-                        const span = document.createElement('span');
-                        span.textContent = preserveSpaces(lineText);
+                    let r = 0;
+                    let a = 0;
+                    
+                    // Smart Alignment Loop - handles inserted paragraphs by pushing rows down
+                    while (r < removedLines.length || a < addedLines.length) {
+                        const tr = document.createElement('tr');
+                        const tdLeft = document.createElement('td');
+                        const tdRight = document.createElement('td');
                         
-                        if (part.added) {
+                        // If we run out of left lines, the rest are insertions
+                        if (r >= removedLines.length) {
+                            tdLeft.className = 'empty';
+                            const span = document.createElement('span');
                             span.className = 'added';
+                            span.textContent = preserveSpaces(addedLines[a]);
                             tdRight.appendChild(span);
-                        } else if (part.removed) {
+                            a++;
+                        } 
+                        // If we run out of right lines, the rest are deletions
+                        else if (a >= addedLines.length) {
+                            const span = document.createElement('span');
                             span.className = 'removed';
+                            span.textContent = preserveSpaces(removedLines[r]);
                             tdLeft.appendChild(span);
-                        } else {
-                            span.className = 'unchanged';
-                            tdLeft.appendChild(span.cloneNode(true));
-                            tdRight.appendChild(span);
-                        }
-                    }
-                    
-                    // If there's a newline here, close the row and start a new one to keep them horizontally locked
-                    if (i < lines.length - 1) {
-                        // Mark empty cells so they get the grey background gap styling
-                        if (!tdLeft.hasChildNodes()) tdLeft.className = 'empty';
-                        if (!tdRight.hasChildNodes()) tdRight.className = 'empty';
-                        
-                        // Prevent entirely empty rows from collapsing visually
-                        if (!tdLeft.hasChildNodes() && !tdRight.hasChildNodes()) {
-                            tdLeft.appendChild(document.createElement('br'));
-                            tdRight.appendChild(document.createElement('br'));
-                        }
+                            tdRight.className = 'empty';
+                            r++;
+                        } 
+                        // Otherwise, calculate similarities to correctly pair the rows
+                        else {
+                            let simHere = getSimilarity(removedLines[r], addedLines[a]);
+                            
+                            let bestFutureASim = 0;
+                            for (let nextA = a + 1; nextA < addedLines.length; nextA++) {
+                                let sim = getSimilarity(removedLines[r], addedLines[nextA]);
+                                if (sim > bestFutureASim) bestFutureASim = sim;
+                            }
+                            
+                            let bestFutureRSim = 0;
+                            for (let nextR = r + 1; nextR < removedLines.length; nextR++) {
+                                let sim = getSimilarity(removedLines[nextR], addedLines[a]);
+                                if (sim > bestFutureRSim) bestFutureRSim = sim;
+                            }
 
-                        tr = document.createElement('tr');
-                        tdLeft = document.createElement('td');
-                        tdRight = document.createElement('td');
+                            if (simHere >= 0.25 || (simHere >= bestFutureASim && simHere >= bestFutureRSim)) {
+                                const innerDiff = diffFn(removedLines[r], addedLines[a]);
+                                
+                                innerDiff.forEach(innerPart => {
+                                    if (innerPart.removed) {
+                                        const span = document.createElement('span');
+                                        span.className = 'removed';
+                                        span.textContent = preserveSpaces(innerPart.value);
+                                        tdLeft.appendChild(span);
+                                    } else if (innerPart.added) {
+                                        const span = document.createElement('span');
+                                        span.className = 'added';
+                                        span.textContent = preserveSpaces(innerPart.value);
+                                        tdRight.appendChild(span);
+                                    } else {
+                                        tdLeft.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
+                                        tdRight.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
+                                    }
+                                });
+                                r++;
+                                a++;
+                            } 
+                            // If a future Right line matches better, this is an insertion gap
+                            else if (bestFutureASim > bestFutureRSim) {
+                                tdLeft.className = 'empty';
+                                const span = document.createElement('span');
+                                span.className = 'added';
+                                span.textContent = preserveSpaces(addedLines[a]);
+                                tdRight.appendChild(span);
+                                a++;
+                            } 
+                            // If a future Left line matches better, this is a deletion gap
+                            else {
+                                const span = document.createElement('span');
+                                span.className = 'removed';
+                                span.textContent = preserveSpaces(removedLines[r]);
+                                tdLeft.appendChild(span);
+                                tdRight.className = 'empty';
+                                r++;
+                            }
+                        }
+                        
                         tr.appendChild(tdLeft);
                         tr.appendChild(tdRight);
                         tbody.appendChild(tr);
                     }
+                    i += 2; 
+                } else {
+                    const lines = part.value.replace(/\n$/, '').split('\n');
+                    lines.forEach(line => {
+                        const tr = document.createElement('tr');
+                        const tdLeft = document.createElement('td');
+                        const tdRight = document.createElement('td');
+                        
+                        if (part.added) {
+                            tdLeft.className = 'empty'; 
+                            const span = document.createElement('span');
+                            span.className = 'added';
+                            span.textContent = preserveSpaces(line);
+                            tdRight.appendChild(span);
+                        } else if (part.removed) {
+                            const span = document.createElement('span');
+                            span.className = 'removed';
+                            span.textContent = preserveSpaces(line);
+                            tdLeft.appendChild(span);
+                            tdRight.className = 'empty'; 
+                        } else {
+                            tdLeft.textContent = preserveSpaces(line);
+                            tdRight.textContent = preserveSpaces(line);
+                        }
+                        
+                        tr.appendChild(tdLeft);
+                        tr.appendChild(tdRight);
+                        tbody.appendChild(tr);
+                    });
+                    i++;
                 }
-            });
-            
-            // Clean up the trailing row if both texts just ended with a newline
-            if (!tdLeft.hasChildNodes() && !tdRight.hasChildNodes()) {
-                tbody.removeChild(tr);
-            } else {
-                if (!tdLeft.hasChildNodes()) tdLeft.className = 'empty';
-                if (!tdRight.hasChildNodes()) tdRight.className = 'empty';
             }
             
+            table.appendChild(tbody);
             container.appendChild(table);
         }
 
