@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copy Diff Checker 344pm</title>
+    <title>Copy Diff Checker</title>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -94,7 +94,7 @@
             white-space: pre-wrap;
             word-break: break-word;
             min-height: 1.5em; 
-            margin-bottom: 1em; 
+            margin-bottom: 1em; /* Creates natural paragraph spacing */
         }
 
         /* Table Layout for Side-by-Side */
@@ -148,7 +148,7 @@
 </head>
 <body>
 
-    <h2>Copy Diff Checker</h2>
+    <h2>Copy Diff Checker 348pm</h2>
     
     <div class="input-container">
         <textarea id="original" placeholder="Paste original text here..."></textarea>
@@ -195,7 +195,7 @@
                        .replace(/ +$/g, match => '\u00A0'.repeat(match.length));
         }
 
-        // Helper function to score how similar two lines/paragraphs are for Side-by-Side alignment
+        // Helper function for Side-by-Side mode to score paragraph similarity and prevent misalignment
         function getSimilarity(s1, s2) {
             if (!s1 && !s2) return 1; 
             if (!s1 || !s2) return 0;
@@ -230,6 +230,7 @@
 
             const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
 
+            // Route the appropriate diff engine based on viewMode
             if (viewMode === 'inline') {
                 const diffResults = diffFn(originalText, modifiedText);
                 renderInline(diffResults, outputDiv);
@@ -239,14 +240,15 @@
             }
         }
 
+        // UNTOUCHED FROM YOUR PROVIDED CODE
         function renderInline(diffResults, container) {
             let currentParagraph = document.createElement('div');
             currentParagraph.className = 'diff-paragraph';
             container.appendChild(currentParagraph);
 
             diffResults.forEach((part) => {
-                // Split purely by true paragraph breaks (double newlines)
-                const chunks = part.value.replace(/\r/g, '').split(/\n{2,}/);
+                // Safely split ONLY by double newlines so soft carriage returns stay within the same block
+                const chunks = part.value.split(/\n{2,}/);
                 
                 chunks.forEach((chunk, index) => {
                     if (index > 0) {
@@ -261,9 +263,7 @@
                         else if (part.removed) span.className = 'removed';
                         else span.className = 'unchanged';
                         
-                        // Treat single hidden newlines as spaces so the text flows naturally
-                        const flowingText = chunk.replace(/\n/g, ' ');
-                        span.textContent = preserveSpaces(flowingText);
+                        span.textContent = preserveSpaces(chunk);
                         currentParagraph.appendChild(span);
                     }
                 });
@@ -273,7 +273,6 @@
         function renderSplit(diffResults, container, diffFn) {
             const table = document.createElement('table');
             table.className = 'diff-table';
-            
             const tbody = document.createElement('tbody');
             
             let i = 0;
@@ -289,13 +288,12 @@
                     let r = 0;
                     let a = 0;
                     
-                    // Smart Alignment Loop - handles inserted paragraphs by pushing rows down
+                    // Smart Alignment Loop
                     while (r < removedLines.length || a < addedLines.length) {
                         const tr = document.createElement('tr');
                         const tdLeft = document.createElement('td');
                         const tdRight = document.createElement('td');
                         
-                        // If we run out of left lines, the rest are insertions
                         if (r >= removedLines.length) {
                             tdLeft.className = 'empty';
                             const span = document.createElement('span');
@@ -303,18 +301,14 @@
                             span.textContent = preserveSpaces(addedLines[a]);
                             tdRight.appendChild(span);
                             a++;
-                        } 
-                        // If we run out of right lines, the rest are deletions
-                        else if (a >= addedLines.length) {
+                        } else if (a >= addedLines.length) {
                             const span = document.createElement('span');
                             span.className = 'removed';
                             span.textContent = preserveSpaces(removedLines[r]);
                             tdLeft.appendChild(span);
                             tdRight.className = 'empty';
                             r++;
-                        } 
-                        // Otherwise, calculate similarities to correctly pair the rows
-                        else {
+                        } else {
                             let simHere = getSimilarity(removedLines[r], addedLines[a]);
                             
                             let bestFutureASim = 0;
@@ -350,18 +344,14 @@
                                 });
                                 r++;
                                 a++;
-                            } 
-                            // If a future Right line matches better, this is an insertion gap
-                            else if (bestFutureASim > bestFutureRSim) {
+                            } else if (bestFutureASim > bestFutureRSim) {
                                 tdLeft.className = 'empty';
                                 const span = document.createElement('span');
                                 span.className = 'added';
                                 span.textContent = preserveSpaces(addedLines[a]);
                                 tdRight.appendChild(span);
                                 a++;
-                            } 
-                            // If a future Left line matches better, this is a deletion gap
-                            else {
+                            } else {
                                 const span = document.createElement('span');
                                 span.className = 'removed';
                                 span.textContent = preserveSpaces(removedLines[r]);
