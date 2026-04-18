@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copy Diff Checker 353p</title>
+    <title>Copy Diff Checker</title>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -230,7 +230,7 @@
 
             const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
 
-            // Route appropriately: Inline gets words/chars, Side-by-Side gets lines to align blocks properly
+            // Route appropriately: Inline gets exact words/chars, Side-by-Side uses lines to group paragraphs
             if (viewMode === 'inline') {
                 const diffResults = diffFn(originalText, modifiedText);
                 renderInline(diffResults, outputDiv);
@@ -240,6 +240,7 @@
             }
         }
 
+        // UNTOUCHED INLINE MODE
         function renderInline(diffResults, container) {
             let currentParagraph = document.createElement('div');
             currentParagraph.className = 'diff-paragraph';
@@ -274,7 +275,6 @@
         function renderSplit(diffResults, container, diffFn) {
             const table = document.createElement('table');
             table.className = 'diff-table';
-            
             const tbody = document.createElement('tbody');
             
             let i = 0;
@@ -290,13 +290,12 @@
                     let r = 0;
                     let a = 0;
                     
-                    // Smart Alignment Loop - handles inserted paragraphs by pushing rows down
+                    // Smart Alignment Loop - Handles insertions/deletions based on relative maximum similarity
                     while (r < removedLines.length || a < addedLines.length) {
                         const tr = document.createElement('tr');
                         const tdLeft = document.createElement('td');
                         const tdRight = document.createElement('td');
                         
-                        // If we run out of left lines, the rest are insertions
                         if (r >= removedLines.length) {
                             tdLeft.className = 'empty';
                             const span = document.createElement('span');
@@ -304,33 +303,30 @@
                             span.textContent = preserveSpaces(addedLines[a]);
                             tdRight.appendChild(span);
                             a++;
-                        } 
-                        // If we run out of right lines, the rest are deletions
-                        else if (a >= addedLines.length) {
+                        } else if (a >= addedLines.length) {
                             const span = document.createElement('span');
                             span.className = 'removed';
                             span.textContent = preserveSpaces(removedLines[r]);
                             tdLeft.appendChild(span);
                             tdRight.className = 'empty';
                             r++;
-                        } 
-                        // Otherwise, calculate similarities to correctly pair the rows
-                        else {
+                        } else {
                             let simHere = getSimilarity(removedLines[r], addedLines[a]);
                             
-                            let bestFutureASim = 0;
+                            let bestFutureASim = -1;
                             for (let nextA = a + 1; nextA < addedLines.length; nextA++) {
                                 let sim = getSimilarity(removedLines[r], addedLines[nextA]);
                                 if (sim > bestFutureASim) bestFutureASim = sim;
                             }
                             
-                            let bestFutureRSim = 0;
+                            let bestFutureRSim = -1;
                             for (let nextR = r + 1; nextR < removedLines.length; nextR++) {
                                 let sim = getSimilarity(removedLines[nextR], addedLines[a]);
                                 if (sim > bestFutureRSim) bestFutureRSim = sim;
                             }
 
-                            if (simHere >= 0.25 || (simHere >= bestFutureASim && simHere >= bestFutureRSim)) {
+                            // Pair them ONLY if they are the best available match for each other
+                            if (simHere >= bestFutureASim && simHere >= bestFutureRSim) {
                                 const innerDiff = diffFn(removedLines[r], addedLines[a]);
                                 
                                 innerDiff.forEach(innerPart => {
@@ -351,18 +347,14 @@
                                 });
                                 r++;
                                 a++;
-                            } 
-                            // If a future Right line matches better, this is an insertion gap
-                            else if (bestFutureASim > bestFutureRSim) {
+                            } else if (bestFutureASim > bestFutureRSim) {
                                 tdLeft.className = 'empty';
                                 const span = document.createElement('span');
                                 span.className = 'added';
                                 span.textContent = preserveSpaces(addedLines[a]);
                                 tdRight.appendChild(span);
                                 a++;
-                            } 
-                            // If a future Left line matches better, this is a deletion gap
-                            else {
+                            } else {
                                 const span = document.createElement('span');
                                 span.className = 'removed';
                                 span.textContent = preserveSpaces(removedLines[r]);
