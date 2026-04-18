@@ -72,8 +72,14 @@
             font-family: monospace;
             font-size: 14px;
             line-height: 1.6;
+        }
+
+        /* Inline Layout PDF Fixes */
+        .diff-paragraph {
+            page-break-inside: avoid; /* Prevents PDF from cutting the paragraph in half */
             white-space: pre-wrap;
             word-break: break-word;
+            min-height: 1.5em; /* Ensures empty newlines still take up space */
         }
 
         /* Table Layout for Side-by-Side */
@@ -81,6 +87,11 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .diff-table tr {
+            page-break-inside: avoid; /* Prevents PDF from cutting rows in half */
         }
         .diff-table th {
             width: 50%;
@@ -99,7 +110,7 @@
             border-right: none;
         }
         .diff-table .empty {
-            background-color: #f6f8fa; /* Light grey placeholder for blank spaces */
+            background-color: #f6f8fa; 
         }
 
         /* Colored Text Differences */
@@ -162,25 +173,42 @@
             }
 
             if (viewMode === 'inline') {
-                // Word-by-word comparison for flowing inline text
                 const diffResults = Diff.diffWords(originalText, modifiedText);
                 renderInline(diffResults, outputDiv);
             } else {
-                // Line-by-line comparison for structural table alignment
                 const diffResults = Diff.diffLines(originalText, modifiedText);
                 renderSplit(diffResults, outputDiv);
             }
         }
 
         function renderInline(diffResults, container) {
+            // Create the first paragraph container
+            let currentParagraph = document.createElement('div');
+            currentParagraph.className = 'diff-paragraph';
+            container.appendChild(currentParagraph);
+
             diffResults.forEach((part) => {
-                const span = document.createElement('span');
-                if (part.added) span.className = 'added';
-                else if (part.removed) span.className = 'removed';
-                else span.className = 'unchanged';
+                // Split the text block by newlines to catch paragraph breaks
+                const lines = part.value.split('\n');
                 
-                span.appendChild(document.createTextNode(part.value));
-                container.appendChild(span);
+                lines.forEach((line, index) => {
+                    // If we hit a newline, create a new paragraph block
+                    if (index > 0) {
+                        currentParagraph = document.createElement('div');
+                        currentParagraph.className = 'diff-paragraph';
+                        container.appendChild(currentParagraph);
+                    }
+                    
+                    if (line) {
+                        const span = document.createElement('span');
+                        if (part.added) span.className = 'added';
+                        else if (part.removed) span.className = 'removed';
+                        else span.className = 'unchanged';
+                        
+                        span.appendChild(document.createTextNode(line));
+                        currentParagraph.appendChild(span);
+                    }
+                });
             });
         }
 
@@ -188,7 +216,6 @@
             const table = document.createElement('table');
             table.className = 'diff-table';
             
-            // Create Table Headers
             const thead = document.createElement('thead');
             const headerRow = document.createElement('tr');
             headerRow.innerHTML = '<th>Original (Deletions)</th><th>Modified (Additions)</th>';
@@ -201,8 +228,6 @@
             while (i < diffResults.length) {
                 const part = diffResults[i];
                 
-                // Detect a direct modification (a removal immediately followed by an addition)
-                // This keeps altered paragraphs directly across from one another.
                 if (part.removed && i + 1 < diffResults.length && diffResults[i+1].added) {
                     const addedPart = diffResults[i+1];
                     const removedLines = part.value.replace(/\n$/, '').split('\n');
@@ -232,9 +257,8 @@
                         tr.appendChild(tdRight);
                         tbody.appendChild(tr);
                     }
-                    i += 2; // Skip the next part because we just processed it
+                    i += 2; 
                 } else {
-                    // Handle standard un-modified lines, or stand-alone additions/deletions
                     const lines = part.value.replace(/\n$/, '').split('\n');
                     lines.forEach(line => {
                         const tr = document.createElement('tr');
@@ -242,13 +266,13 @@
                         const tdRight = document.createElement('td');
                         
                         if (part.added) {
-                            tdLeft.className = 'empty'; // Blank space on the left
+                            tdLeft.className = 'empty'; 
                             tdRight.className = 'added';
                             tdRight.textContent = line;
                         } else if (part.removed) {
                             tdLeft.className = 'removed';
                             tdLeft.textContent = line;
-                            tdRight.className = 'empty'; // Blank space on the right
+                            tdRight.className = 'empty'; 
                         } else {
                             tdLeft.className = 'unchanged';
                             tdLeft.textContent = line;
@@ -275,7 +299,9 @@
                 filename:     'text-comparison.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+                // This explicitly tells the PDF library to respect the CSS page-break rules we added
+                pagebreak:    { mode: ['css', 'legacy'] } 
             };
             html2pdf().set(opt).from(element).save();
         }
