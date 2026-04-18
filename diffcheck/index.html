@@ -61,7 +61,8 @@
             background-color: #ffffff;
             color: #000000;
         }
-        /* Output Layouts */
+        
+        /* General Output */
         #pdf-container {
             padding: 1rem;
             border: 2px solid #000000;
@@ -72,22 +73,35 @@
             font-size: 14px;
             line-height: 1.6;
             white-space: pre-wrap;
+            word-break: break-word;
         }
-        .split-view {
-            display: flex;
-            gap: 2rem;
+
+        /* Table Layout for Side-by-Side */
+        .diff-table {
             width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
         }
-        .split-pane {
+        .diff-table th {
             width: 50%;
-        }
-        .pane-header {
-            font-weight: bold;
-            margin-bottom: 1rem;
+            text-align: left;
+            padding: 0.5rem;
+            border-bottom: 2px solid #000000;
             text-transform: uppercase;
-            border-bottom: 1px solid #000000;
-            padding-bottom: 0.5rem;
         }
+        .diff-table td {
+            width: 50%;
+            padding: 0.5rem;
+            vertical-align: top;
+            border-right: 1px solid #e1e4e8;
+        }
+        .diff-table td:last-child {
+            border-right: none;
+        }
+        .diff-table .empty {
+            background-color: #f6f8fa; /* Light grey placeholder for blank spaces */
+        }
+
         /* Colored Text Differences */
         .added { 
             background-color: #e6ffec; 
@@ -139,21 +153,21 @@
             const outputDiv = document.getElementById('output');
             const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
             
-            // Reset the output area and its layout classes
             outputDiv.innerHTML = '';
             outputDiv.className = ''; 
 
-            // Don't run the diff if both boxes are empty
             if (!originalText && !modifiedText) {
                 outputDiv.innerHTML = 'Results will appear here...';
                 return;
             }
 
-            const diffResults = Diff.diffWords(originalText, modifiedText);
-
             if (viewMode === 'inline') {
+                // Word-by-word comparison for flowing inline text
+                const diffResults = Diff.diffWords(originalText, modifiedText);
                 renderInline(diffResults, outputDiv);
             } else {
+                // Line-by-line comparison for structural table alignment
+                const diffResults = Diff.diffLines(originalText, modifiedText);
                 renderSplit(diffResults, outputDiv);
             }
         }
@@ -171,38 +185,87 @@
         }
 
         function renderSplit(diffResults, container) {
-            // Apply the flexbox layout class for side-by-side
-            container.className = 'split-view';
+            const table = document.createElement('table');
+            table.className = 'diff-table';
             
-            // Create Left Pane (Original)
-            const leftPane = document.createElement('div');
-            leftPane.className = 'split-pane';
-            leftPane.innerHTML = '<div class="pane-header">Original (Deletions)</div>';
+            // Create Table Headers
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = '<th>Original (Deletions)</th><th>Modified (Additions)</th>';
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
             
-            // Create Right Pane (Modified)
-            const rightPane = document.createElement('div');
-            rightPane.className = 'split-pane';
-            rightPane.innerHTML = '<div class="pane-header">Modified (Additions)</div>';
-
-            // Populate the panes
-            diffResults.forEach((part) => {
-                if (!part.added) { // Left side ignores additions
-                    const spanLeft = document.createElement('span');
-                    spanLeft.className = part.removed ? 'removed' : 'unchanged';
-                    spanLeft.appendChild(document.createTextNode(part.value));
-                    leftPane.appendChild(spanLeft);
-                }
+            const tbody = document.createElement('tbody');
+            
+            let i = 0;
+            while (i < diffResults.length) {
+                const part = diffResults[i];
                 
-                if (!part.removed) { // Right side ignores removals
-                    const spanRight = document.createElement('span');
-                    spanRight.className = part.added ? 'added' : 'unchanged';
-                    spanRight.appendChild(document.createTextNode(part.value));
-                    rightPane.appendChild(spanRight);
+                // Detect a direct modification (a removal immediately followed by an addition)
+                // This keeps altered paragraphs directly across from one another.
+                if (part.removed && i + 1 < diffResults.length && diffResults[i+1].added) {
+                    const addedPart = diffResults[i+1];
+                    const removedLines = part.value.replace(/\n$/, '').split('\n');
+                    const addedLines = addedPart.value.replace(/\n$/, '').split('\n');
+                    const maxLines = Math.max(removedLines.length, addedLines.length);
+                    
+                    for (let j = 0; j < maxLines; j++) {
+                        const tr = document.createElement('tr');
+                        
+                        const tdLeft = document.createElement('td');
+                        if (j < removedLines.length) {
+                            tdLeft.className = 'removed';
+                            tdLeft.textContent = removedLines[j];
+                        } else {
+                            tdLeft.className = 'empty';
+                        }
+                        
+                        const tdRight = document.createElement('td');
+                        if (j < addedLines.length) {
+                            tdRight.className = 'added';
+                            tdRight.textContent = addedLines[j];
+                        } else {
+                            tdRight.className = 'empty';
+                        }
+                        
+                        tr.appendChild(tdLeft);
+                        tr.appendChild(tdRight);
+                        tbody.appendChild(tr);
+                    }
+                    i += 2; // Skip the next part because we just processed it
+                } else {
+                    // Handle standard un-modified lines, or stand-alone additions/deletions
+                    const lines = part.value.replace(/\n$/, '').split('\n');
+                    lines.forEach(line => {
+                        const tr = document.createElement('tr');
+                        const tdLeft = document.createElement('td');
+                        const tdRight = document.createElement('td');
+                        
+                        if (part.added) {
+                            tdLeft.className = 'empty'; // Blank space on the left
+                            tdRight.className = 'added';
+                            tdRight.textContent = line;
+                        } else if (part.removed) {
+                            tdLeft.className = 'removed';
+                            tdLeft.textContent = line;
+                            tdRight.className = 'empty'; // Blank space on the right
+                        } else {
+                            tdLeft.className = 'unchanged';
+                            tdLeft.textContent = line;
+                            tdRight.className = 'unchanged';
+                            tdRight.textContent = line;
+                        }
+                        
+                        tr.appendChild(tdLeft);
+                        tr.appendChild(tdRight);
+                        tbody.appendChild(tr);
+                    });
+                    i++;
                 }
-            });
-
-            container.appendChild(leftPane);
-            container.appendChild(rightPane);
+            }
+            
+            table.appendChild(tbody);
+            container.appendChild(table);
         }
 
         function exportToPDF() {
@@ -214,8 +277,6 @@
                 html2canvas:  { scale: 2 },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
-
-            // Generate and download the PDF
             html2pdf().set(opt).from(element).save();
         }
     </script>
