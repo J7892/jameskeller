@@ -94,7 +94,6 @@
             white-space: pre-wrap;
             word-break: break-word;
             min-height: 1.5em; 
-            margin-bottom: 1em; /* Safely creates true paragraph spacing */
         }
 
         /* Table Layout for Side-by-Side */
@@ -195,6 +194,23 @@
                        .replace(/ +$/g, match => '\u00A0'.repeat(match.length));
         }
 
+        // Helper function to score how similar two lines/paragraphs are
+        function getSimilarity(s1, s2) {
+            if (!s1 && !s2) return 1; // Both blank lines match perfectly
+            if (!s1 || !s2) return 0;
+            const w1 = s1.toLowerCase().split(/[\s,.-]+/);
+            const w2 = s2.toLowerCase().split(/[\s,.-]+/);
+            let matchCount = 0;
+            const set2 = new Set(w2);
+            for (const w of w1) {
+                if (w && set2.has(w)) {
+                    matchCount++;
+                    set2.delete(w); // Prevent double counting words
+                }
+            }
+            return matchCount / Math.max(w1.length, w2.length);
+        }
+
         function compareTexts() {
             const originalText = document.getElementById('original').value;
             const modifiedText = document.getElementById('modified').value;
@@ -228,25 +244,22 @@
             container.appendChild(currentParagraph);
 
             diffResults.forEach((part) => {
-                // Remove rogue carriage returns, then split ONLY by double newlines (\n\n) 
-                // to identify intentional paragraph breaks, ignoring internal soft-returns.
-                const cleanText = part.value.replace(/\r/g, '');
-                const chunks = cleanText.split(/\n{2,}/);
+                const lines = part.value.split('\n');
                 
-                chunks.forEach((chunk, index) => {
+                lines.forEach((line, index) => {
                     if (index > 0) {
                         currentParagraph = document.createElement('div');
                         currentParagraph.className = 'diff-paragraph';
                         container.appendChild(currentParagraph);
                     }
                     
-                    if (chunk) {
+                    if (line) {
                         const span = document.createElement('span');
                         if (part.added) span.className = 'added';
                         else if (part.removed) span.className = 'removed';
                         else span.className = 'unchanged';
                         
-                        span.appendChild(document.createTextNode(preserveSpaces(chunk)));
+                        span.appendChild(document.createTextNode(preserveSpaces(line)));
                         currentParagraph.appendChild(span);
                     }
                 });
@@ -263,53 +276,97 @@
             while (i < diffResults.length) {
                 const part = diffResults[i];
                 
+                // If we detect a modification block (removed lines immediately followed by added lines)
                 if (part.removed && i + 1 < diffResults.length && diffResults[i+1].added) {
                     const addedPart = diffResults[i+1];
                     const removedLines = part.value.replace(/\n$/, '').split('\n');
                     const addedLines = addedPart.value.replace(/\n$/, '').split('\n');
-                    const maxLines = Math.max(removedLines.length, addedLines.length);
                     
-                    for (let j = 0; j < maxLines; j++) {
+                    let r = 0;
+                    let a = 0;
+                    
+                    // Smart Alignment Loop
+                    while (r < removedLines.length || a < addedLines.length) {
                         const tr = document.createElement('tr');
                         const tdLeft = document.createElement('td');
                         const tdRight = document.createElement('td');
                         
-                        if (j < removedLines.length && j < addedLines.length) {
-                            const innerDiff = diffFn(removedLines[j], addedLines[j]);
+                        // If we run out of left lines, the rest are insertions
+                        if (r >= removedLines.length) {
+                            tdLeft.className = 'empty';
+                            const span = document.createElement('span');
+                            span.className = 'added';
+                            span.textContent = preserveSpaces(addedLines[a]);
+                            tdRight.appendChild(span);
+                            a++;
+                        } 
+                        // If we run out of right lines, the rest are deletions
+                        else if (a >= addedLines.length) {
+                            const span = document.createElement('span');
+                            span.className = 'removed';
+                            span.textContent = preserveSpaces(removedLines[r]);
+                            tdLeft.appendChild(span);
+                            tdRight.className = 'empty';
+                            r++;
+                        } 
+                        // Otherwise, we have both. Calculate similarities to align them.
+                        else {
+                            let simHere = getSimilarity(removedLines[r], addedLines[a]);
                             
-                            innerDiff.forEach(innerPart => {
-                                if (innerPart.removed) {
-                                    const span = document.createElement('span');
-                                    span.className = 'removed';
-                                    span.textContent = preserveSpaces(innerPart.value);
-                                    tdLeft.appendChild(span);
-                                } else if (innerPart.added) {
-                                    const span = document.createElement('span');
-                                    span.className = 'added';
-                                    span.textContent = preserveSpaces(innerPart.value);
-                                    tdRight.appendChild(span);
-                                } else {
-                                    tdLeft.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
-                                    tdRight.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
-                                }
-                            });
-                        } else {
-                            if (j < removedLines.length) {
-                                const span = document.createElement('span');
-                                span.className = 'removed';
-                                span.textContent = preserveSpaces(removedLines[j]);
-                                tdLeft.appendChild(span);
-                            } else {
-                                tdLeft.className = 'empty';
+                            // Check if the current Left line matches a future Right line better
+                            let bestFutureASim = 0;
+                            for (let nextA = a + 1; nextA < addedLines.length; nextA++) {
+                                let sim = getSimilarity(removedLines[r], addedLines[nextA]);
+                                if (sim > bestFutureASim) bestFutureASim = sim;
                             }
                             
-                            if (j < addedLines.length) {
+                            // Check if the current Right line matches a future Left line better
+                            let bestFutureRSim = 0;
+                            for (let nextR = r + 1; nextR < removedLines.length; nextR++) {
+                                let sim = getSimilarity(removedLines[nextR], addedLines[a]);
+                                if (sim > bestFutureRSim) bestFutureRSim = sim;
+                            }
+
+                            // If they are reasonably similar, or neither has a better future match, pair them
+                            if (simHere >= 0.25 || (simHere >= bestFutureASim && simHere >= bestFutureRSim)) {
+                                const innerDiff = diffFn(removedLines[r], addedLines[a]);
+                                
+                                innerDiff.forEach(innerPart => {
+                                    if (innerPart.removed) {
+                                        const span = document.createElement('span');
+                                        span.className = 'removed';
+                                        span.textContent = preserveSpaces(innerPart.value);
+                                        tdLeft.appendChild(span);
+                                    } else if (innerPart.added) {
+                                        const span = document.createElement('span');
+                                        span.className = 'added';
+                                        span.textContent = preserveSpaces(innerPart.value);
+                                        tdRight.appendChild(span);
+                                    } else {
+                                        tdLeft.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
+                                        tdRight.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
+                                    }
+                                });
+                                r++;
+                                a++;
+                            } 
+                            // If a future Right line matches better, this is an insertion
+                            else if (bestFutureASim > bestFutureRSim) {
+                                tdLeft.className = 'empty';
                                 const span = document.createElement('span');
                                 span.className = 'added';
-                                span.textContent = preserveSpaces(addedLines[j]);
+                                span.textContent = preserveSpaces(addedLines[a]);
                                 tdRight.appendChild(span);
-                            } else {
+                                a++;
+                            } 
+                            // If a future Left line matches better, this is a deletion
+                            else {
+                                const span = document.createElement('span');
+                                span.className = 'removed';
+                                span.textContent = preserveSpaces(removedLines[r]);
+                                tdLeft.appendChild(span);
                                 tdRight.className = 'empty';
+                                r++;
                             }
                         }
                         
@@ -317,8 +374,9 @@
                         tr.appendChild(tdRight);
                         tbody.appendChild(tr);
                     }
-                    i += 2; 
+                    i += 2; // Skip the added block since we processed it alongside the removed block
                 } else {
+                    // Handle completely unchanged lines, or isolated single additions/deletions
                     const lines = part.value.replace(/\n$/, '').split('\n');
                     lines.forEach(line => {
                         const tr = document.createElement('tr');
