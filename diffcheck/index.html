@@ -88,15 +88,16 @@
             border-bottom: 1px solid #000000;
             padding-bottom: 0.5rem;
         }
-        /* Black and White Styling for Text Differences */
+        /* Colored Text Differences */
         .added { 
+            background-color: #e6ffec; 
+            color: #1a7f37; 
             font-weight: bold; 
-            text-decoration: underline; 
-            background-color: #f0f0f0;
         }
         .removed { 
+            background-color: #ffebe9; 
+            color: #cf222e; 
             text-decoration: line-through; 
-            color: #555555;
         }
         .unchanged { 
             color: #000000; 
@@ -115,10 +116,10 @@
     <div class="controls">
         <div class="options">
             <label>
-                <input type="radio" name="viewMode" value="inline" checked> Inline View
+                <input type="radio" name="viewMode" value="inline" onchange="compareTexts()" checked> Inline View
             </label>
             <label>
-                <input type="radio" name="viewMode" value="split"> Side-by-Side
+                <input type="radio" name="viewMode" value="split" onchange="compareTexts()"> Side-by-Side
             </label>
         </div>
         <div class="btn-group">
@@ -138,7 +139,16 @@
             const outputDiv = document.getElementById('output');
             const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
             
+            // Reset the output area and its layout classes
             outputDiv.innerHTML = '';
+            outputDiv.className = ''; 
+
+            // Don't run the diff if both boxes are empty
+            if (!originalText && !modifiedText) {
+                outputDiv.innerHTML = 'Results will appear here...';
+                return;
+            }
+
             const diffResults = Diff.diffWords(originalText, modifiedText);
 
             if (viewMode === 'inline') {
@@ -161,6 +171,7 @@
         }
 
         function renderSplit(diffResults, container) {
+            // Apply the flexbox layout class for side-by-side
             container.className = 'split-view';
             
             // Create Left Pane (Original)
