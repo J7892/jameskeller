@@ -292,19 +292,32 @@
             container.appendChild(table);
         }
 
+        
         function exportToPDF() {
             const element = document.getElementById('pdf-container');
+            
+            // Temporarily remove the border so the PDF can calculate page breaks cleanly
+            element.style.border = 'none';
+
             const opt = {
                 margin:       0.5,
                 filename:     'text-comparison.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
+                html2canvas:  { 
+                    scale: 2,
+                    scrollY: 0, // Forces the capture to start at the absolute top
+                    windowY: 0  // Resets the window context to prevent offset
+                },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-                // This explicitly tells the PDF library to respect the CSS page-break rules we added
                 pagebreak:    { mode: ['css', 'legacy'] } 
             };
-            html2pdf().set(opt).from(element).save();
+
+            // Generate the PDF, then restore the border once it finishes downloading
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.border = ''; 
+            });
         }
+        
     </script>
 </body>
 </html>
