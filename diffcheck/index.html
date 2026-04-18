@@ -41,10 +41,13 @@
             margin-bottom: 1rem;
             padding-bottom: 1rem;
             border-bottom: 2px solid #000000;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
         .options {
             display: flex;
             gap: 2.5rem;
+            flex-wrap: wrap;
         }
         .option-group {
             display: flex;
@@ -175,6 +178,13 @@
                     <input type="radio" name="matchMode" value="letter" onchange="compareTexts()"> By Letter
                 </label>
             </div>
+
+            <div class="option-group">
+                <strong>Format:</strong>
+                <label>
+                    <input type="checkbox" id="cleanBreaks" onchange="compareTexts()" checked> Merge PDF Line Breaks
+                </label>
+            </div>
         </div>
         <div class="btn-group">
             <button onclick="compareTexts()">Compare Texts</button>
@@ -187,21 +197,29 @@
     </div>
 
     <script>
+        // Removes stray newlines caused by pasting from PDFs so text acts like a normal paragraph
+        function cleanSoftBreaks(text) {
+            if (!text) return text;
+            text = text.replace(/\r\n/g, '\n');
+            // Replaces any newline that isn't preceded or followed by another newline with a space
+            return text.replace(/([^\n])\n([^\n])/g, '$1 $2');
+        }
+
         // Fix for the PDF generator dropping edge spaces
         function preserveSpaces(text) {
             if (!text) return text;
-            // Converts any leading or trailing spaces into non-breaking spaces
             return text.replace(/^ +/g, match => '\u00A0'.repeat(match.length))
                        .replace(/ +$/g, match => '\u00A0'.repeat(match.length));
         }
 
         function compareTexts() {
-            const originalText = document.getElementById('original').value;
-            const modifiedText = document.getElementById('modified').value;
+            let originalText = document.getElementById('original').value;
+            let modifiedText = document.getElementById('modified').value;
             const outputDiv = document.getElementById('output');
             
             const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
             const matchMode = document.querySelector('input[name="matchMode"]:checked').value;
+            const cleanBreaks = document.getElementById('cleanBreaks').checked;
             
             outputDiv.innerHTML = '';
             outputDiv.className = ''; 
@@ -209,6 +227,12 @@
             if (!originalText && !modifiedText) {
                 outputDiv.innerHTML = 'Results will appear here...';
                 return;
+            }
+
+            // Clean up PDF formatting artifacts if the user left the option checked
+            if (cleanBreaks) {
+                originalText = cleanSoftBreaks(originalText);
+                modifiedText = cleanSoftBreaks(modifiedText);
             }
 
             const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
@@ -228,22 +252,30 @@
             container.appendChild(currentParagraph);
 
             diffResults.forEach((part) => {
-                const lines = part.value.split('\n');
+                // We split strictly by double newlines (\n\n) so real paragraphs form HTML blocks, 
+                // but soft line breaks simply wrap naturally within the same block.
+                const segments = part.value.split(/(\n{2,})/);
                 
-                lines.forEach((line, index) => {
-                    if (index > 0) {
+                segments.forEach((segment) => {
+                    if (/^\n{2,}$/.test(segment)) {
                         currentParagraph = document.createElement('div');
                         currentParagraph.className = 'diff-paragraph';
                         container.appendChild(currentParagraph);
-                    }
-                    
-                    if (line) {
+                        
                         const span = document.createElement('span');
                         if (part.added) span.className = 'added';
                         else if (part.removed) span.className = 'removed';
                         else span.className = 'unchanged';
                         
-                        span.appendChild(document.createTextNode(preserveSpaces(line)));
+                        span.appendChild(document.createTextNode(segment));
+                        currentParagraph.appendChild(span);
+                    } else if (segment) {
+                        const span = document.createElement('span');
+                        if (part.added) span.className = 'added';
+                        else if (part.removed) span.className = 'removed';
+                        else span.className = 'unchanged';
+                        
+                        span.appendChild(document.createTextNode(preserveSpaces(segment)));
                         currentParagraph.appendChild(span);
                     }
                 });
