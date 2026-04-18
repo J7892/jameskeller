@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Text Diff</title>
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 2rem auto;
+            max-width: 1200px;
+            padding: 0 1rem;
+            background-color: #f6f8fa;
+            color: #24292f;
+        }
+        .input-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        textarea {
+            width: 50%;
+            height: 300px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            resize: vertical;
+        }
+        button {
+            background-color: #2da44e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        button:hover { background-color: #2c974b; }
+        #output {
+            background: white;
+            padding: 1.5rem;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 150px;
+        }
+        /* Styling for the text differences */
+        .added { background-color: #e6ffec; color: #1a7f37; font-weight: bold; }
+        .removed { background-color: #ffebe9; color: #cf222e; text-decoration: line-through; }
+        .unchanged { color: #57606a; }
+    </style>
+</head>
+<body>
+
+    <h2>Private Text Comparator</h2>
+    <p>All processing is done locally in your browser. No data is sent to any server.</p>
+
+    <div class="input-container">
+        <textarea id="original" placeholder="Paste the original text here..."></textarea>
+        <textarea id="modified" placeholder="Paste the modified text here..."></textarea>
+    </div>
+
+    <button onclick="compareTexts()">Compare Texts</button>
+
+    <div id="output">Results will appear here...</div>
+
+    <script>
+        function compareTexts() {
+            const originalText = document.getElementById('original').value;
+            const modifiedText = document.getElementById('modified').value;
+            const outputDiv = document.getElementById('output');
+            
+            // Clear previous results
+            outputDiv.innerHTML = '';
+
+            // Using jsdiff to compare word by word
+            const diffResults = Diff.diffWords(originalText, modifiedText);
+
+            // Loop through the results and wrap them in styled HTML spans
+            diffResults.forEach((part) => {
+                const span = document.createElement('span');
+                
+                if (part.added) {
+                    span.className = 'added';
+                } else if (part.removed) {
+                    span.className = 'removed';
+                } else {
+                    span.className = 'unchanged';
+                }
+                
+                span.appendChild(document.createTextNode(part.value));
+                outputDiv.appendChild(span);
+            });
+        }
+    </script>
+</body>
+</html>
