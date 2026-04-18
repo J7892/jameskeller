@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copy Diff Checker</title>
+    <title>Private Text Diff</title>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -143,15 +143,17 @@
         .added { 
             background-color: #e6ffec; 
             color: #1a7f37; 
-            font-weight: bold; 
+            font-weight: normal; 
         }
         .removed { 
             background-color: #ffebe9; 
             color: #cf222e; 
             text-decoration: line-through; 
+            font-weight: normal; 
         }
         .unchanged { 
             color: #000000; 
+            font-weight: normal;
         }
     </style>
 </head>
@@ -217,14 +219,12 @@
                 return;
             }
 
-            // Determine whether to diff by words or individual characters
             const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
 
             if (viewMode === 'inline') {
                 const diffResults = diffFn(originalText, modifiedText);
                 renderInline(diffResults, outputDiv);
             } else {
-                // For split view, we still diff by lines first to keep the table rows aligned
                 const lineResults = Diff.diffLines(originalText, modifiedText);
                 renderSplit(lineResults, outputDiv, diffFn);
             }
@@ -268,7 +268,6 @@
             while (i < diffResults.length) {
                 const part = diffResults[i];
                 
-                // If a line was removed and immediately replaced by an added line (a modification)
                 if (part.removed && i + 1 < diffResults.length && diffResults[i+1].added) {
                     const addedPart = diffResults[i+1];
                     const removedLines = part.value.replace(/\n$/, '').split('\n');
@@ -280,7 +279,6 @@
                         const tdLeft = document.createElement('td');
                         const tdRight = document.createElement('td');
                         
-                        // If both lines exist across from each other, run the word/letter diff INSIDE the row
                         if (j < removedLines.length && j < addedLines.length) {
                             const innerDiff = diffFn(removedLines[j], addedLines[j]);
                             
@@ -301,7 +299,6 @@
                                 }
                             });
                         } else {
-                            // If it's an uneven modification (e.g. replaced 1 line with 2 lines)
                             if (j < removedLines.length) {
                                 const span = document.createElement('span');
                                 span.className = 'removed';
@@ -327,7 +324,6 @@
                     }
                     i += 2; 
                 } else {
-                    // Standard un-modified lines, or stand-alone additions/deletions
                     const lines = part.value.replace(/\n$/, '').split('\n');
                     lines.forEach(line => {
                         const tr = document.createElement('tr');
