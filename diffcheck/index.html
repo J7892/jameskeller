@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copy Diff Checker</title>
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 2rem auto;
+            max-width: 1400px;
+            padding: 0 1rem;
+            background-color: #ffffff;
+            color: #000000;
+        }
+        
+        /* Input Layout */
+        .input-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        textarea {
+            width: 50%;
+            height: 300px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 14px;
+            border: 2px solid #000000;
+            border-radius: 0;
+            resize: vertical;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #000000;
+        }
+        .options {
+            display: flex;
+            gap: 2.5rem;
+        }
+        .option-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            font-size: 14px;
+        }
+        .option-group strong {
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+        button {
+            background-color: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        
+        /* General Output */
+        #pdf-container {
+            padding: 1rem;
+            border: 2px solid #000000;
+            min-height: 150px;
+        }
+        #output {
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Inline Layout PDF Fixes */
+        .diff-paragraph {
+            page-break-inside: avoid; 
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 1.5em; 
+            margin-bottom: 1em; /* Creates natural paragraph spacing */
+        }
+
+        /* Table Layout for Side-by-Side */
+        .diff-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .diff-table tr {
+            page-break-inside: avoid; 
+        }
+        .diff-table th {
+            width: 50%;
+            text-align: left;
+            padding: 0.5rem;
+            border-bottom: 2px solid #000000;
+            text-transform: uppercase;
+        }
+        .diff-table td {
+            width: 50%;
+            padding: 0.5rem;
+            vertical-align: top;
+            border-right: 1px solid #e1e4e8;
+        }
+        .diff-table td:last-child {
+            border-right: none;
+        }
+        .diff-table .empty {
+            background-color: #f6f8fa; 
+        }
+
+        /* Colored Text Differences */
+        .added { 
+            background-color: #e6ffec; 
+            color: #1a7f37; 
+            font-weight: normal; 
+        }
+        .removed { 
+            background-color: #ffebe9; 
+            color: #cf222e; 
+            text-decoration: line-through; 
+            font-weight: normal; 
+        }
+        .unchanged { 
+            color: #000000; 
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Copy Diff Checker</h2>
+    
+    <div class="input-container">
+        <textarea id="original" placeholder="Paste original text here..."></textarea>
+        <textarea id="modified" placeholder="Paste changed text here..."></textarea>
+    </div>
+
+    <div class="controls">
+        <div class="options">
+            <div class="option-group">
+                <strong>View:</strong>
+                <label>
+                    <input type="radio" name="viewMode" value="inline" onchange="compareTexts()" checked> Inline
+                </label>
+                <label>
+                    <input type="radio" name="viewMode" value="split" onchange="compareTexts()"> Side-by-Side
+                </label>
+            </div>
+            
+            <div class="option-group">
+                <strong>Match:</strong>
+                <label>
+                    <input type="radio" name="matchMode" value="word" onchange="compareTexts()" checked> By Word
+                </label>
+                <label>
+                    <input type="radio" name="matchMode" value="letter" onchange="compareTexts()"> By Letter
+                </label>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button onclick="compareTexts()">Compare Texts</button>
+            <button onclick="exportToPDF()">Export to PDF</button>
+        </div>
+    </div>
+
+    <div id="pdf-container">
+        <div id="output">Results will appear here...</div>
+    </div>
+
+    <script>
+        // Fix for the PDF generator dropping edge spaces
+        function preserveSpaces(text) {
+            if (!text) return text;
+            return text.replace(/^ +/g, match => '\u00A0'.repeat(match.length))
+                       .replace(/ +$/g, match => '\u00A0'.repeat(match.length));
+        }
+
+        function compareTexts() {
+            const originalText = document.getElementById('original').value;
+            const modifiedText = document.getElementById('modified').value;
+            const outputDiv = document.getElementById('output');
+            
+            const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
+            const matchMode = document.querySelector('input[name="matchMode"]:checked').value;
+            
+            outputDiv.innerHTML = '';
+            outputDiv.className = ''; 
+
+            if (!originalText && !modifiedText) {
+                outputDiv.innerHTML = 'Results will appear here...';
+                return;
+            }
+
+            // Using diffWords or diffChars as the absolute foundation for both views
+            const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
+            const diffResults = diffFn(originalText, modifiedText);
+
+            if (viewMode === 'inline') {
+                renderInline(diffResults, outputDiv);
+            } else {
+                renderSplit(diffResults, outputDiv);
+            }
+        }
+
+        function renderInline(diffResults, container) {
+            let currentParagraph = document.createElement('div');
+            currentParagraph.className = 'diff-paragraph';
+            container.appendChild(currentParagraph);
+
+            diffResults.forEach((part) => {
+                // Safely split ONLY by double newlines so soft carriage returns stay within the same block
+                const chunks = part.value.split(/\n{2,}/);
+                
+                chunks.forEach((chunk, index) => {
+                    if (index > 0) {
+                        currentParagraph = document.createElement('div');
+                        currentParagraph.className = 'diff-paragraph';
+                        container.appendChild(currentParagraph);
+                    }
+                    
+                    if (chunk) {
+                        const span = document.createElement('span');
+                        if (part.added) span.className = 'added';
+                        else if (part.removed) span.className = 'removed';
+                        else span.className = 'unchanged';
+                        
+                        span.textContent = preserveSpaces(chunk);
+                        currentParagraph.appendChild(span);
+                    }
+                });
+            });
+        }
+
+        function renderSplit(diffResults, container) {
+            const table = document.createElement('table');
+            table.className = 'diff-table';
+            const tbody = document.createElement('tbody');
+            table.appendChild(tbody);
+
+            let tr = document.createElement('tr');
+            let tdLeft = document.createElement('td');
+            let tdRight = document.createElement('td');
+            tr.appendChild(tdLeft);
+            tr.appendChild(tdRight);
+            tbody.appendChild(tr);
+
+            diffResults.forEach(part => {
+                // Slicing the word-diff output strictly at newlines to create synchronized table rows
+                const lines = part.value.split('\n');
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const lineText = lines[i];
+                    
+                    if (lineText) {
+                        const span = document.createElement('span');
+                        span.textContent = preserveSpaces(lineText);
+                        
+                        if (part.added) {
+                            span.className = 'added';
+                            tdRight.appendChild(span);
+                        } else if (part.removed) {
+                            span.className = 'removed';
+                            tdLeft.appendChild(span);
+                        } else {
+                            span.className = 'unchanged';
+                            tdLeft.appendChild(span.cloneNode(true));
+                            tdRight.appendChild(span);
+                        }
+                    }
+                    
+                    // If there's a newline here, close the row and start a new one to keep them horizontally locked
+                    if (i < lines.length - 1) {
+                        // Mark empty cells so they get the grey background gap styling
+                        if (!tdLeft.hasChildNodes()) tdLeft.className = 'empty';
+                        if (!tdRight.hasChildNodes()) tdRight.className = 'empty';
+                        
+                        // Prevent entirely empty rows from collapsing visually
+                        if (!tdLeft.hasChildNodes() && !tdRight.hasChildNodes()) {
+                            tdLeft.appendChild(document.createElement('br'));
+                            tdRight.appendChild(document.createElement('br'));
+                        }
+
+                        tr = document.createElement('tr');
+                        tdLeft = document.createElement('td');
+                        tdRight = document.createElement('td');
+                        tr.appendChild(tdLeft);
+                        tr.appendChild(tdRight);
+                        tbody.appendChild(tr);
+                    }
+                }
+            });
+            
+            // Clean up the trailing row if both texts just ended with a newline
+            if (!tdLeft.hasChildNodes() && !tdRight.hasChildNodes()) {
+                tbody.removeChild(tr);
+            } else {
+                if (!tdLeft.hasChildNodes()) tdLeft.className = 'empty';
+                if (!tdRight.hasChildNodes()) tdRight.className = 'empty';
+            }
+            
+            container.appendChild(table);
+        }
+
+        function exportToPDF() {
+            const element = document.getElementById('pdf-container');
+            element.style.border = 'none';
+
+            const opt = {
+                margin:       0.5,
+                filename:     'text-comparison.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, scrollY: 0, windowY: 0 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+                pagebreak:    { mode: ['css', 'legacy'] } 
+            };
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.border = ''; 
+            });
+        }
+    </script>
+</body>
+</html>
