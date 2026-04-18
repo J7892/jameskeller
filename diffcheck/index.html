@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Private Text Diff</title>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
             margin: 2rem auto;
-            max-width: 1200px;
+            max-width: 1400px;
             padding: 0 1rem;
-            background-color: #f6f8fa;
-            color: #24292f;
+            background-color: #ffffff;
+            color: #000000;
         }
         .input-container {
             display: flex;
@@ -25,79 +26,186 @@
             padding: 1rem;
             font-family: monospace;
             font-size: 14px;
-            border: 1px solid #d0d7de;
-            border-radius: 6px;
+            border: 2px solid #000000;
+            border-radius: 0;
             resize: vertical;
         }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #000000;
+        }
+        .options {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
         button {
-            background-color: #2da44e;
-            color: white;
-            border: none;
+            background-color: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
             padding: 10px 20px;
             font-weight: bold;
-            border-radius: 6px;
             cursor: pointer;
-            margin-bottom: 1rem;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
         }
-        button:hover { background-color: #2c974b; }
-        #output {
-            background: white;
-            padding: 1.5rem;
-            border: 1px solid #d0d7de;
-            border-radius: 6px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            font-size: 14px;
-            line-height: 1.5;
+        button:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        /* Output Layouts */
+        #pdf-container {
+            padding: 1rem;
+            border: 2px solid #000000;
             min-height: 150px;
         }
-        /* Styling for the text differences */
-        .added { background-color: #e6ffec; color: #1a7f37; font-weight: bold; }
-        .removed { background-color: #ffebe9; color: #cf222e; text-decoration: line-through; }
-        .unchanged { color: #57606a; }
+        #output {
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .split-view {
+            display: flex;
+            gap: 2rem;
+            width: 100%;
+        }
+        .split-pane {
+            width: 50%;
+        }
+        .pane-header {
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid #000000;
+            padding-bottom: 0.5rem;
+        }
+        /* Black and White Styling for Text Differences */
+        .added { 
+            font-weight: bold; 
+            text-decoration: underline; 
+            background-color: #f0f0f0;
+        }
+        .removed { 
+            text-decoration: line-through; 
+            color: #555555;
+        }
+        .unchanged { 
+            color: #000000; 
+        }
     </style>
 </head>
 <body>
 
     <h2>Private Text Comparator</h2>
-    <p>All processing is done locally in your browser. No data is sent to any server.</p>
-
+    
     <div class="input-container">
-        <textarea id="original" placeholder="Paste the original text here..."></textarea>
-        <textarea id="modified" placeholder="Paste the modified text here..."></textarea>
+        <textarea id="original" placeholder="Original text..."></textarea>
+        <textarea id="modified" placeholder="Modified text..."></textarea>
     </div>
 
-    <button onclick="compareTexts()">Compare Texts</button>
+    <div class="controls">
+        <div class="options">
+            <label>
+                <input type="radio" name="viewMode" value="inline" checked> Inline View
+            </label>
+            <label>
+                <input type="radio" name="viewMode" value="split"> Side-by-Side
+            </label>
+        </div>
+        <div class="btn-group">
+            <button onclick="compareTexts()">Compare Texts</button>
+            <button onclick="exportToPDF()">Export to PDF</button>
+        </div>
+    </div>
 
-    <div id="output">Results will appear here...</div>
+    <div id="pdf-container">
+        <div id="output">Results will appear here...</div>
+    </div>
 
     <script>
         function compareTexts() {
             const originalText = document.getElementById('original').value;
             const modifiedText = document.getElementById('modified').value;
             const outputDiv = document.getElementById('output');
+            const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
             
-            // Clear previous results
             outputDiv.innerHTML = '';
-
-            // Using jsdiff to compare word by word
             const diffResults = Diff.diffWords(originalText, modifiedText);
 
-            // Loop through the results and wrap them in styled HTML spans
+            if (viewMode === 'inline') {
+                renderInline(diffResults, outputDiv);
+            } else {
+                renderSplit(diffResults, outputDiv);
+            }
+        }
+
+        function renderInline(diffResults, container) {
             diffResults.forEach((part) => {
                 const span = document.createElement('span');
-                
-                if (part.added) {
-                    span.className = 'added';
-                } else if (part.removed) {
-                    span.className = 'removed';
-                } else {
-                    span.className = 'unchanged';
-                }
+                if (part.added) span.className = 'added';
+                else if (part.removed) span.className = 'removed';
+                else span.className = 'unchanged';
                 
                 span.appendChild(document.createTextNode(part.value));
-                outputDiv.appendChild(span);
+                container.appendChild(span);
             });
+        }
+
+        function renderSplit(diffResults, container) {
+            container.className = 'split-view';
+            
+            // Create Left Pane (Original)
+            const leftPane = document.createElement('div');
+            leftPane.className = 'split-pane';
+            leftPane.innerHTML = '<div class="pane-header">Original (Deletions)</div>';
+            
+            // Create Right Pane (Modified)
+            const rightPane = document.createElement('div');
+            rightPane.className = 'split-pane';
+            rightPane.innerHTML = '<div class="pane-header">Modified (Additions)</div>';
+
+            // Populate the panes
+            diffResults.forEach((part) => {
+                if (!part.added) { // Left side ignores additions
+                    const spanLeft = document.createElement('span');
+                    spanLeft.className = part.removed ? 'removed' : 'unchanged';
+                    spanLeft.appendChild(document.createTextNode(part.value));
+                    leftPane.appendChild(spanLeft);
+                }
+                
+                if (!part.removed) { // Right side ignores removals
+                    const spanRight = document.createElement('span');
+                    spanRight.className = part.added ? 'added' : 'unchanged';
+                    spanRight.appendChild(document.createTextNode(part.value));
+                    rightPane.appendChild(spanRight);
+                }
+            });
+
+            container.appendChild(leftPane);
+            container.appendChild(rightPane);
+        }
+
+        function exportToPDF() {
+            const element = document.getElementById('pdf-container');
+            const opt = {
+                margin:       0.5,
+                filename:     'text-comparison.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // Generate and download the PDF
+            html2pdf().set(opt).from(element).save();
         }
     </script>
 </body>
