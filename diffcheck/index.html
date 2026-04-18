@@ -94,6 +94,7 @@
             white-space: pre-wrap;
             word-break: break-word;
             min-height: 1.5em; 
+            margin-bottom: 1em; /* Safely creates true paragraph spacing */
         }
 
         /* Table Layout for Side-by-Side */
@@ -244,22 +245,25 @@
             container.appendChild(currentParagraph);
 
             diffResults.forEach((part) => {
-                const lines = part.value.split('\n');
+                // Remove rogue carriage returns, then split ONLY by double newlines (\n\n) 
+                // to identify intentional paragraph breaks, ignoring internal soft-returns.
+                const cleanText = part.value.replace(/\r/g, '');
+                const chunks = cleanText.split(/\n{2,}/);
                 
-                lines.forEach((line, index) => {
+                chunks.forEach((chunk, index) => {
                     if (index > 0) {
                         currentParagraph = document.createElement('div');
                         currentParagraph.className = 'diff-paragraph';
                         container.appendChild(currentParagraph);
                     }
                     
-                    if (line) {
+                    if (chunk) {
                         const span = document.createElement('span');
                         if (part.added) span.className = 'added';
                         else if (part.removed) span.className = 'removed';
                         else span.className = 'unchanged';
                         
-                        span.appendChild(document.createTextNode(preserveSpaces(line)));
+                        span.appendChild(document.createTextNode(preserveSpaces(chunk)));
                         currentParagraph.appendChild(span);
                     }
                 });
