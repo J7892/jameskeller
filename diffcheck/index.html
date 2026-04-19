@@ -289,14 +289,11 @@
             });
         }
 
-        // SANITIZED PARAGRAPH SPLIT ENGINE
         function renderSplit(origText, modText, container, diffFn) {
             const table = document.createElement('table');
             table.className = 'diff-table';
             const tbody = document.createElement('tbody');
             
-            // Fix: Removing the parentheses around the regex prevents newlines from being captured 
-            // as literal array items. Combined with trim() and filter(), this creates a 100% pure text pool.
             const origParas = origText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
             const modParas = modText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
             
@@ -405,21 +402,39 @@
             container.appendChild(table);
         }
 
+        // REWRITTEN TO FIX ODD PDF SCALING AND WRAPPING
         function exportToPDF() {
             const element = document.getElementById('pdf-container');
-            element.style.border = 'none';
+            const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
+            const isSplit = viewMode === 'split';
 
             const opt = {
                 margin:       0.5,
                 filename:     'text-comparison.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, scrollY: 0, windowY: 0 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+                html2canvas:  { 
+                    scale: 2, 
+                    scrollY: 0, 
+                    windowY: 0,
+                    onclone: function(clonedDoc) {
+                        const container = clonedDoc.getElementById('pdf-container');
+                        container.style.border = 'none';
+                        // Lock the width of the cloned document to prevent html2canvas 
+                        // from capturing at your monitor's width and squishing the paragraphs.
+                        container.style.width = isSplit ? '1050px' : '800px';
+                        container.style.maxWidth = 'none';
+                    }
+                },
+                jsPDF:        { 
+                    unit: 'in', 
+                    format: 'letter', 
+                    // Automatically flip to landscape for Side-by-Side to prevent skinny odd text wraps
+                    orientation: isSplit ? 'landscape' : 'portrait' 
+                },
                 pagebreak:    { mode: ['css', 'legacy'] } 
             };
-            html2pdf().set(opt).from(element).save().then(() => {
-                element.style.border = ''; 
-            });
+            
+            html2pdf().set(opt).from(element).save();
         }
     </script>
 </body>
