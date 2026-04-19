@@ -1,7 +1,5 @@
 # --- GENERAL SEARCH ENGINES ---
 User-agent: *
 Disallow: /
-Disallow: /tools/
-Disallow: /diffcheck/
 Allow: /$
 Allow: /index.html
