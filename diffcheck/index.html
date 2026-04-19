@@ -153,7 +153,7 @@
 </head>
 <body>
 
-    <h2>Copy Diff Checker</h2>
+    <h2>Copy Diff Checker 11p</h2>
     
     <div class="input-container">
         <textarea id="original" placeholder="Paste original text here..."></textarea>
@@ -199,6 +199,22 @@
                        .replace(/ +$/g, match => '\u00A0'.repeat(match.length));
         }
 
+        // BUG FIX: Bypasses the html2canvas multiline text-decoration bug by chopping 
+        // long text blocks into smaller, safe spans that never wrap across lines.
+        function appendSafeSpans(container, text, className) {
+            if (!text) return;
+            const processedText = preserveSpaces(text);
+            const chunks = processedText.split(/([ \t\n]+)/);
+            
+            chunks.forEach(chunk => {
+                if (!chunk) return;
+                const span = document.createElement('span');
+                if (className) span.className = className;
+                span.textContent = chunk;
+                container.appendChild(span);
+            });
+        }
+
         function getSimilarity(s1, s2) {
             const t1 = s1 ? s1.trim() : '';
             const t2 = s2 ? s2.trim() : '';
@@ -223,18 +239,12 @@
             const innerDiff = diffFn(rLine, aLine);
             innerDiff.forEach(innerPart => {
                 if (innerPart.removed) {
-                    const span = document.createElement('span');
-                    span.className = 'removed';
-                    span.textContent = preserveSpaces(innerPart.value);
-                    tdLeft.appendChild(span);
+                    appendSafeSpans(tdLeft, innerPart.value, 'removed');
                 } else if (innerPart.added) {
-                    const span = document.createElement('span');
-                    span.className = 'added';
-                    span.textContent = preserveSpaces(innerPart.value);
-                    tdRight.appendChild(span);
+                    appendSafeSpans(tdRight, innerPart.value, 'added');
                 } else {
-                    tdLeft.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
-                    tdRight.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
+                    appendSafeSpans(tdLeft, innerPart.value, 'unchanged');
+                    appendSafeSpans(tdRight, innerPart.value, 'unchanged');
                 }
             });
         }
@@ -281,14 +291,9 @@
                     }
                     
                     if (chunk) {
-                        const span = document.createElement('span');
-                        if (part.added) span.className = 'added';
-                        else if (part.removed) span.className = 'removed';
-                        else span.className = 'unchanged';
-                        
+                        const className = part.added ? 'added' : (part.removed ? 'removed' : 'unchanged');
                         const flowingText = chunk.replace(/\n/g, ' ');
-                        span.textContent = preserveSpaces(flowingText);
-                        currentParagraph.appendChild(span);
+                        appendSafeSpans(currentParagraph, flowingText, className);
                     }
                 });
             });
@@ -331,17 +336,11 @@
                         
                         if (r >= removedParas.length) {
                             tdLeft.className = 'empty';
-                            const span = document.createElement('span');
-                            span.className = 'added';
-                            span.textContent = preserveSpaces(addedParas[a]);
-                            tdRight.appendChild(span);
+                            appendSafeSpans(tdRight, addedParas[a], 'added');
                             a++;
                         } 
                         else if (a >= addedParas.length) {
-                            const span = document.createElement('span');
-                            span.className = 'removed';
-                            span.textContent = preserveSpaces(removedParas[r]);
-                            tdLeft.appendChild(span);
+                            appendSafeSpans(tdLeft, removedParas[r], 'removed');
                             tdRight.className = 'empty';
                             r++;
                         } 
@@ -366,17 +365,11 @@
                             } 
                             else if (bestFutureASim > bestFutureRSim) {
                                 tdLeft.className = 'empty';
-                                const span = document.createElement('span');
-                                span.className = 'added';
-                                span.textContent = preserveSpaces(addedParas[a]);
-                                tdRight.appendChild(span);
+                                appendSafeSpans(tdRight, addedParas[a], 'added');
                                 a++;
                             } 
                             else {
-                                const span = document.createElement('span');
-                                span.className = 'removed';
-                                span.textContent = preserveSpaces(removedParas[r]);
-                                tdLeft.appendChild(span);
+                                appendSafeSpans(tdLeft, removedParas[r], 'removed');
                                 tdRight.className = 'empty';
                                 r++;
                             }
@@ -392,8 +385,8 @@
                         const tdLeft = document.createElement('td');
                         const tdRight = document.createElement('td');
                         
-                        tdLeft.textContent = para;
-                        tdRight.textContent = para;
+                        appendSafeSpans(tdLeft, para, 'unchanged');
+                        appendSafeSpans(tdRight, para, 'unchanged');
                         
                         tr.appendChild(tdLeft);
                         tr.appendChild(tdRight);
@@ -407,7 +400,6 @@
             container.appendChild(table);
         }
 
-        // REWRITTEN to fix text-dropping bug by explicitly natively reflowing the live DOM
         function exportToPDF() {
             const btn = document.getElementById('exportBtn');
             const originalBtnText = btn.textContent;
@@ -418,15 +410,10 @@
             const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
             const isSplit = viewMode === 'split';
 
-            // 1. Store the exact original UI styles
             const originalBorder = element.style.border;
             const originalWidth = element.style.width;
             const originalMaxWidth = element.style.maxWidth;
 
-            // 2. Lock the live browser DOM to the exact proportions of the PDF.
-            // BUG FIX: html2canvas has a known bug where text goes missing if it tries 
-            // to dynamically reflow text inside a background clone. By resizing the live container 
-            // first, we force the browser to compute 100% accurate text wrap boundaries.
             element.style.border = 'none';
             element.style.width = isSplit ? '1050px' : '800px';
             element.style.maxWidth = 'none';
@@ -444,10 +431,8 @@
                 pagebreak:    { mode: ['css', 'legacy'] } 
             };
 
-            // 3. Give the browser 100ms to natively repaint the text before snapping the canvas
             setTimeout(() => {
                 html2pdf().set(opt).from(element).save().then(() => {
-                    // 4. Instantly restore the UI back to normal
                     element.style.border = originalBorder;
                     element.style.width = originalWidth;
                     element.style.maxWidth = originalMaxWidth;
