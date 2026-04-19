@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copy Diff Checker 1045p</title>
+    <title>Copy Diff Checker</title>
     <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
@@ -138,4 +138,289 @@
             background-color: #ffebe9; 
             color: #cf222e; 
             text-decoration: line-through; 
-            font-weight:
+            font-weight: normal; 
+        }
+        .unchanged { 
+            color: #000000; 
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Copy Diff Checker</h2>
+    
+    <div class="input-container">
+        <textarea id="original" placeholder="Paste original text here..."></textarea>
+        <textarea id="modified" placeholder="Paste changed text here..."></textarea>
+    </div>
+
+    <div class="controls">
+        <div class="options">
+            <div class="option-group">
+                <strong>View:</strong>
+                <label>
+                    <input type="radio" name="viewMode" value="inline" onchange="compareTexts()" checked> Inline
+                </label>
+                <label>
+                    <input type="radio" name="viewMode" value="split" onchange="compareTexts()"> Side-by-Side
+                </label>
+            </div>
+            
+            <div class="option-group">
+                <strong>Match:</strong>
+                <label>
+                    <input type="radio" name="matchMode" value="word" onchange="compareTexts()" checked> By Word
+                </label>
+                <label>
+                    <input type="radio" name="matchMode" value="letter" onchange="compareTexts()"> By Letter
+                </label>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button onclick="compareTexts()">Compare Texts</button>
+            <button onclick="exportToPDF()">Export to PDF</button>
+        </div>
+    </div>
+
+    <div id="pdf-container">
+        <div id="output">Results will appear here...</div>
+    </div>
+
+    <script>
+        function preserveSpaces(text) {
+            if (!text) return text;
+            return text.replace(/^ +/g, match => '\u00A0'.repeat(match.length))
+                       .replace(/ +$/g, match => '\u00A0'.repeat(match.length));
+        }
+
+        function getSimilarity(s1, s2) {
+            const t1 = s1 ? s1.trim() : '';
+            const t2 = s2 ? s2.trim() : '';
+            
+            if (!t1 && !t2) return 1.0; 
+            if (!t1 || !t2) return 0.0; 
+            
+            const w1 = t1.toLowerCase().split(/[\s,.-]+/);
+            const w2 = t2.toLowerCase().split(/[\s,.-]+/);
+            let matchCount = 0;
+            const set2 = new Set(w2);
+            for (const w of w1) {
+                if (w && set2.has(w)) {
+                    matchCount++;
+                    set2.delete(w); 
+                }
+            }
+            return matchCount / Math.max(w1.length, w2.length);
+        }
+
+        function applyInnerDiff(rLine, aLine, tdLeft, tdRight, diffFn) {
+            const innerDiff = diffFn(rLine, aLine);
+            innerDiff.forEach(innerPart => {
+                if (innerPart.removed) {
+                    const span = document.createElement('span');
+                    span.className = 'removed';
+                    span.textContent = preserveSpaces(innerPart.value);
+                    tdLeft.appendChild(span);
+                } else if (innerPart.added) {
+                    const span = document.createElement('span');
+                    span.className = 'added';
+                    span.textContent = preserveSpaces(innerPart.value);
+                    tdRight.appendChild(span);
+                } else {
+                    tdLeft.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
+                    tdRight.appendChild(document.createTextNode(preserveSpaces(innerPart.value)));
+                }
+            });
+        }
+
+        function compareTexts() {
+            const originalText = document.getElementById('original').value;
+            const modifiedText = document.getElementById('modified').value;
+            const outputDiv = document.getElementById('output');
+            
+            const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
+            const matchMode = document.querySelector('input[name="matchMode"]:checked').value;
+            
+            outputDiv.innerHTML = '';
+            outputDiv.className = ''; 
+
+            if (!originalText && !modifiedText) {
+                outputDiv.innerHTML = 'Results will appear here...';
+                return;
+            }
+
+            const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
+
+            if (viewMode === 'inline') {
+                const diffResults = diffFn(originalText, modifiedText);
+                renderInline(diffResults, outputDiv);
+            } else {
+                renderSplit(originalText, modifiedText, outputDiv, diffFn);
+            }
+        }
+
+        function renderInline(diffResults, container) {
+            let currentParagraph = document.createElement('div');
+            currentParagraph.className = 'diff-paragraph';
+            container.appendChild(currentParagraph);
+
+            diffResults.forEach((part) => {
+                const chunks = part.value.replace(/\r/g, '').split(/\n{2,}/);
+                
+                chunks.forEach((chunk, index) => {
+                    if (index > 0) {
+                        currentParagraph = document.createElement('div');
+                        currentParagraph.className = 'diff-paragraph';
+                        container.appendChild(currentParagraph);
+                    }
+                    
+                    if (chunk) {
+                        const span = document.createElement('span');
+                        if (part.added) span.className = 'added';
+                        else if (part.removed) span.className = 'removed';
+                        else span.className = 'unchanged';
+                        
+                        const flowingText = chunk.replace(/\n/g, ' ');
+                        span.textContent = preserveSpaces(flowingText);
+                        currentParagraph.appendChild(span);
+                    }
+                });
+            });
+        }
+
+        // SANITIZED PARAGRAPH SPLIT ENGINE
+        function renderSplit(origText, modText, container, diffFn) {
+            const table = document.createElement('table');
+            table.className = 'diff-table';
+            const tbody = document.createElement('tbody');
+            
+            // Fix: Removing the parentheses around the regex prevents newlines from being captured 
+            // as literal array items. Combined with trim() and filter(), this creates a 100% pure text pool.
+            const origParas = origText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
+            const modParas = modText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
+            
+            const diffBlocks = Diff.diffArrays(origParas, modParas);
+            
+            let i = 0;
+            while (i < diffBlocks.length) {
+                const part = diffBlocks[i];
+                
+                if (part.added || part.removed) {
+                    let removedParas = [];
+                    let addedParas = [];
+                    
+                    while (i < diffBlocks.length && (diffBlocks[i].added || diffBlocks[i].removed)) {
+                        if (diffBlocks[i].removed) {
+                            removedParas.push(...diffBlocks[i].value);
+                        } else {
+                            addedParas.push(...diffBlocks[i].value);
+                        }
+                        i++;
+                    }
+                    
+                    let r = 0;
+                    let a = 0;
+                    
+                    while (r < removedParas.length || a < addedParas.length) {
+                        const tr = document.createElement('tr');
+                        const tdLeft = document.createElement('td');
+                        const tdRight = document.createElement('td');
+                        
+                        if (r >= removedParas.length) {
+                            tdLeft.className = 'empty';
+                            const span = document.createElement('span');
+                            span.className = 'added';
+                            span.textContent = preserveSpaces(addedParas[a]);
+                            tdRight.appendChild(span);
+                            a++;
+                        } 
+                        else if (a >= addedParas.length) {
+                            const span = document.createElement('span');
+                            span.className = 'removed';
+                            span.textContent = preserveSpaces(removedParas[r]);
+                            tdLeft.appendChild(span);
+                            tdRight.className = 'empty';
+                            r++;
+                        } 
+                        else {
+                            let simHere = getSimilarity(removedParas[r], addedParas[a]);
+                            
+                            let bestFutureASim = -1;
+                            for (let nextA = a + 1; nextA < addedParas.length; nextA++) {
+                                let sim = getSimilarity(removedParas[r], addedParas[nextA]);
+                                if (sim > bestFutureASim) bestFutureASim = sim;
+                            }
+                            
+                            let bestFutureRSim = -1;
+                            for (let nextR = r + 1; nextR < removedParas.length; nextR++) {
+                                let sim = getSimilarity(removedParas[nextR], addedParas[a]);
+                                if (sim > bestFutureRSim) bestFutureRSim = sim;
+                            }
+
+                            if (simHere >= bestFutureASim && simHere >= bestFutureRSim) {
+                                applyInnerDiff(removedParas[r], addedParas[a], tdLeft, tdRight, diffFn);
+                                r++; a++;
+                            } 
+                            else if (bestFutureASim > bestFutureRSim) {
+                                tdLeft.className = 'empty';
+                                const span = document.createElement('span');
+                                span.className = 'added';
+                                span.textContent = preserveSpaces(addedParas[a]);
+                                tdRight.appendChild(span);
+                                a++;
+                            } 
+                            else {
+                                const span = document.createElement('span');
+                                span.className = 'removed';
+                                span.textContent = preserveSpaces(removedParas[r]);
+                                tdLeft.appendChild(span);
+                                tdRight.className = 'empty';
+                                r++;
+                            }
+                        }
+                        
+                        tr.appendChild(tdLeft);
+                        tr.appendChild(tdRight);
+                        tbody.appendChild(tr);
+                    }
+                } else {
+                    part.value.forEach(para => {
+                        const tr = document.createElement('tr');
+                        const tdLeft = document.createElement('td');
+                        const tdRight = document.createElement('td');
+                        
+                        tdLeft.textContent = para;
+                        tdRight.textContent = para;
+                        
+                        tr.appendChild(tdLeft);
+                        tr.appendChild(tdRight);
+                        tbody.appendChild(tr);
+                    });
+                    i++;
+                }
+            }
+            
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        function exportToPDF() {
+            const element = document.getElementById('pdf-container');
+            element.style.border = 'none';
+
+            const opt = {
+                margin:       0.5,
+                filename:     'text-comparison.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, scrollY: 0, windowY: 0 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+                pagebreak:    { mode: ['css', 'legacy'] } 
+            };
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.border = ''; 
+            });
+        }
+    </script>
+</body>
+</html>
