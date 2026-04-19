@@ -149,11 +149,34 @@
             color: #000000; 
             font-weight: normal;
         }
+
+        /* Stats Section */
+        .stats-container {
+            display: none; /* Hidden until texts are compared */
+            gap: 3rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 2px solid #000000;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .stat-positive {
+            color: #1a7f37;
+            font-weight: bold;
+        }
+        .stat-negative {
+            color: #cf222e;
+            font-weight: bold;
+        }
+        .stat-neutral {
+            color: #000000;
+            font-weight: normal;
+        }
     </style>
 </head>
 <body>
 
-    <h2>Copy Diff Checker 11p</h2>
+    <h2>Copy Diff Checker</h2>
     
     <div class="input-container">
         <textarea id="original" placeholder="Paste original text here..."></textarea>
@@ -190,6 +213,15 @@
 
     <div id="pdf-container">
         <div id="output">Results will appear here...</div>
+        
+        <div id="stats-container" class="stats-container">
+            <div class="stat-box">
+                <strong>Words:</strong> <span id="word-count">0 &rarr; 0</span> <span id="word-diff"></span>
+            </div>
+            <div class="stat-box">
+                <strong>Characters:</strong> <span id="char-count">0 &rarr; 0</span> <span id="char-diff"></span>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -199,8 +231,6 @@
                        .replace(/ +$/g, match => '\u00A0'.repeat(match.length));
         }
 
-        // BUG FIX: Bypasses the html2canvas multiline text-decoration bug by chopping 
-        // long text blocks into smaller, safe spans that never wrap across lines.
         function appendSafeSpans(container, text, className) {
             if (!text) return;
             const processedText = preserveSpaces(text);
@@ -249,10 +279,59 @@
             });
         }
 
+        function updateStats(originalText, modifiedText) {
+            const statsContainer = document.getElementById('stats-container');
+            
+            if (!originalText && !modifiedText) {
+                statsContainer.style.display = 'none';
+                return;
+            }
+
+            statsContainer.style.display = 'flex';
+
+            // Character count
+            const origChars = originalText.length;
+            const modChars = modifiedText.length;
+            const charDiff = modChars - origChars;
+
+            // Word count
+            const origWords = originalText.trim() ? originalText.trim().split(/\s+/).length : 0;
+            const modWords = modifiedText.trim() ? modifiedText.trim().split(/\s+/).length : 0;
+            const wordDiff = modWords - origWords;
+
+            document.getElementById('word-count').innerHTML = `${origWords} &rarr; ${modWords}`;
+            document.getElementById('char-count').innerHTML = `${origChars} &rarr; ${modChars}`;
+
+            const wordDiffEl = document.getElementById('word-diff');
+            if (wordDiff > 0) {
+                wordDiffEl.textContent = `(+${wordDiff})`;
+                wordDiffEl.className = 'stat-positive';
+            } else if (wordDiff < 0) {
+                wordDiffEl.textContent = `(${wordDiff})`;
+                wordDiffEl.className = 'stat-negative';
+            } else {
+                wordDiffEl.textContent = `(0)`;
+                wordDiffEl.className = 'stat-neutral';
+            }
+
+            const charDiffEl = document.getElementById('char-diff');
+            if (charDiff > 0) {
+                charDiffEl.textContent = `(+${charDiff})`;
+                charDiffEl.className = 'stat-positive';
+            } else if (charDiff < 0) {
+                charDiffEl.textContent = `(${charDiff})`;
+                charDiffEl.className = 'stat-negative';
+            } else {
+                charDiffEl.textContent = `(0)`;
+                charDiffEl.className = 'stat-neutral';
+            }
+        }
+
         function compareTexts() {
             const originalText = document.getElementById('original').value;
             const modifiedText = document.getElementById('modified').value;
             const outputDiv = document.getElementById('output');
+            const statsContainer = document.getElementById('stats-container');
             
             const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
             const matchMode = document.querySelector('input[name="matchMode"]:checked').value;
@@ -262,8 +341,11 @@
 
             if (!originalText && !modifiedText) {
                 outputDiv.innerHTML = 'Results will appear here...';
+                statsContainer.style.display = 'none';
                 return;
             }
+
+            updateStats(originalText, modifiedText);
 
             const diffFn = matchMode === 'word' ? Diff.diffWords : Diff.diffChars;
 
