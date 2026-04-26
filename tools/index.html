@@ -3,56 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appz 🚀</title>
+    <title>James Keller | Tools</title>
     <style>
+        :root {
+            --bg: #ffffff;
+            --text: #1a1a1a;
+            --accent: #2563eb;
+            --gray: #f8fafc;
+            --border: #e2e8f0;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 60px 20px;
-            text-align: center;
+            font-family: -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding-top: 10vh;
         }
 
-        h2 {
-            font-size: 2.5rem;
-            margin-bottom: 50px;
-            letter-spacing: -0.5px;
+        .container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
         }
 
-        .app-list {
+        header {
+            margin-bottom: 32px;
+            border-bottom: 2px solid var(--text);
+            padding-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tool-grid {
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 12px;
+        }
+
+        .tool-link {
+            display: flex;
             align-items: center;
-        }
-
-        .app-link {
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--gray);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             text-decoration: none;
-            color: #1e293b;
-            font-size: 1.6rem;
-            font-weight: 600;
-            padding: 10px 20px;
-            transition: opacity 0.2s ease;
+            color: var(--text);
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
 
-        .app-link:hover {
-            opacity: 0.6;
+        .tool-link:hover {
+            border-color: var(--text);
+            background: #fff;
+            transform: translateX(4px);
+        }
+
+        .tool-link span {
+            font-size: 0.9rem;
+            opacity: 0.5;
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: #64748b;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h2>Appz 🚀</h2>
-    </header>
-
-    <div class="app-list">
+    <div class="container">
+        <header>
+            <h1>Editorial Tools</h1>
+        </header>
         
-        <a href="recipe.html" class="app-link">🍳 Recipes</a>
+        <nav class="tool-grid">
+            <a href="/notes/" class="tool-link">
+                Notes <span>/notes/</span>
+            </a>
+            <a href="/diffchecker/" class="tool-link">
+                Diff Checker <span>/diffchecker/</span>
+            </a>
+            <a href="/wordcount/" class="tool-link">
+                Word Counter <span>/wordcount/</span>
+            </a>
+        </nav>
 
-        </div>
+        <footer>
+            James Keller &bull; 2026
+        </footer>
+    </div>
 
 </body>
 </html>
