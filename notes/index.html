@@ -39,7 +39,6 @@
         .btn-new-main { background: #007bff; color: white; font-size: 1.4em; padding: 4px 16px; height: 50px; }
         .btn-new-sidebar { background: #007bff; color: white; margin-bottom: 10px; width: 100%; }
         
-        /* Export Button States */
         .btn-export { background: #6c757d; color: white; margin-top: 10px; font-size: 0.8em; width: 100%; }
         .btn-export.needs-backup { background: #fd7e14; animation: pulse-border 2s infinite; }
         
@@ -92,7 +91,7 @@
             <div class="status-group">
                 <span id="status" class="save-status">Saved</span>
                 <span id="word-count" class="word-count">0 words</span>
-                <span id="backup-nag" class="backup-nag">⚠️ Backup Recommended</span>
+                <span id="backup-nag" class="backup-nag">⚠️ Weekly Backup Due</span>
             </div>
             <div style="font-size: 0.75em; color: #999;">
                 Last backup: <span id="last-backup-text">Never</span>
@@ -135,14 +134,24 @@
 
     let currentNoteId = null;
     let saveTimeout = null;
-    const BACKUP_THRESHOLD_DAYS = 3; // Change this value to adjust the reminder frequency
+    const BACKUP_THRESHOLD_DAYS = 7;
 
     window.onload = () => { 
         renderNoteList();
         checkBackupStatus();
+        
+        // Restore sidebar state
+        const sidebarState = localStorage.getItem('sidebar-open');
+        if (sidebarState === 'true') {
+            document.getElementById('sidebar').classList.add('open');
+        }
     };
 
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    function toggleSidebar() { 
+        const sidebar = document.getElementById('sidebar');
+        const isOpen = sidebar.classList.toggle('open');
+        localStorage.setItem('sidebar-open', isOpen);
+    }
 
     function updateWordCount() {
         const text = quill.getText().trim();
@@ -184,7 +193,6 @@
         status.style.color = "#28a745";
     }
 
-    /* --- BACKUP REMINDER LOGIC --- */
     function checkBackupStatus() {
         const lastBackup = localStorage.getItem('last-export-date');
         const nagSpan = document.getElementById('backup-nag');
@@ -258,9 +266,8 @@
         const notes = localStorage.getItem('my-github-notes');
         if (!notes || notes === "[]") return alert("No notes to export!");
         
-        // Save current date as last export
         localStorage.setItem('last-export-date', new Date().toISOString());
-        checkBackupStatus(); // Refresh UI
+        checkBackupStatus();
 
         const blob = new Blob([notes], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
