@@ -9,11 +9,10 @@
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f5f5f5; height: 100vh; overflow: hidden; display: flex; }
         
-        /* Sidebar - Push Layout */
         .sidebar { 
             width: 280px; min-width: 280px; background: white; padding: 15px; border-right: 1px solid #ddd; 
             display: flex; flex-direction: column; transition: margin-left 0.3s ease; 
-            margin-left: -280px; height: 100vh;
+            margin-left: -280px; height: 100vh; z-index: 1000;
         }
         .sidebar.open { margin-left: 0; }
         
@@ -21,7 +20,6 @@
         .note-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; border-radius: 4px; }
         .note-item:hover { background: #f0f0f0; }
 
-        /* Editor Area */
         .editor-area { 
             flex-grow: 1; background: white; height: 100vh; display: flex; flex-direction: column; 
             padding: 20px 40px 10px 60px; position: relative; min-width: 0;
@@ -34,29 +32,24 @@
         #editor-container { flex-grow: 1; font-size: 16px; }
         .ql-editor p { margin-bottom: 1.5em !important; } 
 
-        /* Buttons & UI */
         button { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; }
         .btn-new-main { background: #007bff; color: white; font-size: 1.4em; padding: 4px 16px; height: 50px; }
         .btn-new-sidebar { background: #007bff; color: white; margin-bottom: 10px; width: 100%; }
-        .btn-export { background: #6c757d; color: white; margin-top: 10px; font-size: 0.8em; }
+        .btn-export { background: #6c757d; color: white; margin-top: 10px; font-size: 0.8em; width: 100%; }
+        .btn-import { background: #f8f9fa; color: #333; border: 1px solid #ddd !important; margin-top: 5px; font-size: 0.8em; width: 100%; }
         .btn-delete { background: #ff4d4d; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px; }
         
-        .toggle-sidebar { 
-            background: #333; color: white; padding: 10px 12px; cursor: pointer; 
-            border-radius: 0 4px 4px 0; position: absolute; left: 0; top: 20px; z-index: 1100; border: none; 
-        }
+        .toggle-sidebar { background: #333; color: white; padding: 10px 12px; cursor: pointer; border-radius: 0 4px 4px 0; position: absolute; left: 0; top: 20px; z-index: 1100; border: none; }
 
-        /* Bottom Bar */
         .bottom-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid #eee; margin-top: 10px; }
         .status-group { display: flex; gap: 20px; align-items: center; }
         .save-status { font-size: 0.85em; color: #28a745; font-weight: 600; min-width: 70px; }
         .word-count { font-size: 0.85em; color: #555; }
-        
-        .auto-export-group { display: flex; align-items: center; gap: 8px; font-size: 0.8em; color: #666; }
-        .auto-export-group input { cursor: pointer; }
 
-        /* Custom Highlight Button */
         .ql-highlight:after { content: "H"; background: #ffff00; padding: 0 4px; border-radius: 2px; border: 1px solid #ccc; font-weight: bold; }
+        
+        /* Hide file input */
+        #import-input { display: none; }
     </style>
 </head>
 <body>
@@ -65,6 +58,8 @@
         <button class="btn-new-sidebar" onclick="createNewNote()">+ New Note</button>
         <div id="note-list" class="note-list"></div>
         <button class="btn-export" onclick="exportNotes()">Download Backup (JSON)</button>
+        <button class="btn-import" onclick="document.getElementById('import-input').click()">Import Backup (JSON)</button>
+        <input type="file" id="import-input" accept=".json" onchange="importNotes(event)">
     </div>
 
     <div class="editor-area">
@@ -84,10 +79,8 @@
                 <span id="status" class="save-status">Saved</span>
                 <span id="word-count" class="word-count">0 words</span>
             </div>
-            
-            <div class="auto-export-group">
-                <input type="checkbox" id="auto-export-toggle">
-                <label for="auto-export-toggle">Auto-download backup on New/Load</label>
+            <div style="font-size: 0.75em; color: #999;">
+                Manual backup recommended before closing tab.
             </div>
         </div>
     </div>
@@ -127,8 +120,16 @@
 
     let currentNoteId = null;
     let saveTimeout = null;
+    let hasUnsavedChanges = false;
 
     window.onload = () => { renderNoteList(); };
+
+    // EXIT WARNING: Browsers allow this to prevent accidental data loss
+    window.onbeforeunload = function() {
+        if (hasUnsavedChanges) {
+            return "You have unsaved changes. Are you sure you want to leave?";
+        }
+    };
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
@@ -139,6 +140,7 @@
     }
 
     function handleInput() {
+        hasUnsavedChanges = true;
         document.getElementById('status').innerText = "Saving...";
         document.getElementById('status').style.color = "#ff9800";
         updateWordCount();
@@ -170,6 +172,7 @@
         const status = document.getElementById('status');
         status.innerText = "Saved";
         status.style.color = "#28a745";
+        hasUnsavedChanges = false; // Reset warning after auto-save finishes
     }
 
     function renderNoteList() {
@@ -185,7 +188,6 @@
     }
 
     function loadNote(id) {
-        if (document.getElementById('auto-export-toggle').checked) exportNotes();
         const notes = JSON.parse(localStorage.getItem('my-github-notes') || '[]');
         const note = notes.find(n => n.id === id);
         if (note) {
@@ -198,7 +200,6 @@
     }
 
     function createNewNote() {
-        if (document.getElementById('auto-export-toggle').checked) exportNotes();
         currentNoteId = null;
         document.getElementById('note-title').value = '';
         quill.setContents([]);
@@ -219,13 +220,32 @@
 
     function exportNotes() {
         const notes = localStorage.getItem('my-github-notes');
-        if (!notes || notes === "[]") return;
+        if (!notes || notes === "[]") return alert("No notes to export!");
         const blob = new Blob([notes], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `notes_backup_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
+    }
+
+    function importNotes(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedNotes = JSON.parse(e.target.result);
+                if (Array.isArray(importedNotes)) {
+                    localStorage.setItem('my-github-notes', JSON.stringify(importedNotes));
+                    renderNoteList();
+                    alert("Notes imported successfully!");
+                }
+            } catch (err) {
+                alert("Invalid JSON file.");
+            }
+        };
+        reader.readAsText(file);
     }
 </script>
 
