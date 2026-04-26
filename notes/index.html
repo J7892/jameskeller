@@ -67,6 +67,24 @@
             100% { box-shadow: 0 0 0 0 rgba(253, 126, 20, 0); }
         }
         #import-input { display: none; }
+
+        /* --- RESPONSIVE ADJUSTMENTS FOR NARROW WINDOWS --- */
+        @media (max-width: 768px) {
+            .editor-area {
+                /* Reduce right padding to 15px. Keep left at 45px so the toggle button doesn't block text. */
+                padding: 15px 15px 10px 45px;
+            }
+            .bottom-bar {
+                /* Let the bottom bar elements wrap to a new line if they run out of space */
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .status-group {
+                /* Tighten the gap between "Saved", "0 words", and "Copy Text" so they fit better */
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+        }
     </style>
 </head>
 <body>
@@ -220,7 +238,6 @@
         if (source === 'user') {
             handleInput();
 
-            // Custom "//" Highlight Markdown
             const selection = quill.getSelection();
             if (selection && selection.index >= 2) {
                 const text = quill.getText(selection.index - 2, 2);
