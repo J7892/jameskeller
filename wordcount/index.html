@@ -24,7 +24,8 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 600px;
+            /* Widened the container to give the text box more room */
+            max-width: 800px; 
         }
         h1 {
             margin-top: 0;
@@ -33,13 +34,15 @@
         }
         textarea {
             width: 100%;
-            height: 250px;
+            /* Increased the height of the text box */
+            height: 400px; 
             padding: 15px;
             box-sizing: border-box;
             border: 1px solid #ccc;
             border-radius: 4px;
             resize: vertical;
-            font-size: 16px;
+            /* Made the inputted text smaller */
+            font-size: 14px; 
             margin-bottom: 1.5rem;
             line-height: 1.5;
         }
@@ -52,24 +55,26 @@
             display: flex;
             justify-content: space-around;
             background: #ecf0f1;
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 6px;
         }
         .stat-box {
             text-align: center;
         }
         .stat-number {
-            font-size: 2rem;
+            /* Made the counter numbers smaller */
+            font-size: 1.5rem; 
             font-weight: bold;
             color: #2980b9;
             display: block;
         }
         .stat-label {
             display: block;
-            font-size: 0.9rem;
+            /* Made the "Words" and "Characters" labels smaller */
+            font-size: 0.8rem; 
             color: #7f8c8d;
             text-transform: uppercase;
-            margin-top: 0.5rem;
+            margin-top: 0.3rem;
             letter-spacing: 1px;
         }
     </style>
@@ -93,24 +98,16 @@
     </div>
 
     <script>
-        // Grab the elements from the DOM
         const textInput = document.getElementById('textInput');
         const wordCountDisplay = document.getElementById('wordCount');
         const charCountDisplay = document.getElementById('charCount');
 
-        // Listen for input events on the textarea
         textInput.addEventListener('input', () => {
             const text = textInput.value;
             
-            // 1. Calculate characters (includes spaces)
             charCountDisplay.textContent = text.length;
 
-            // 2. Calculate words
-            // Trim removes extra space at start/end, split(/\s+/) separates by any whitespace
             const words = text.trim().split(/\s+/);
-            
-            // If the input is empty or just whitespace, the split array will have an empty string.
-            // We filter out empty strings so the count stays at 0.
             const validWords = words.filter(word => word.length > 0);
             wordCountDisplay.textContent = validWords.length;
         });
