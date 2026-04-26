@@ -19,12 +19,14 @@
         /* Editor Area */
         .editor-area { flex-grow: 1; background: white; padding: 20px; display: flex; flex-direction: column; position: relative; overflow-y: auto; }
         #editor-container { flex-grow: 1; font-size: 16px; }
-        .ql-editor p { margin-bottom: 1.2em !important; } 
+        
+        /* Spacing for Paragraphs */
+        .ql-editor p { margin-bottom: 1.5em !important; } 
 
         input#note-title { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1.4em; font-weight: bold; outline: none; }
         
         /* Bottom Bar */
-        .bottom-bar { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .bottom-bar { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 10px; }
         .save-status { font-size: 0.85em; color: #28a745; font-weight: 600; }
         .shortcut-info { font-size: 0.8em; color: #777; }
         
@@ -33,6 +35,9 @@
         .btn-export { background: #6c757d; color: white; margin-top: 10px; font-size: 0.8em; }
         .btn-delete { background: #ff4d4d; color: white; padding: 2px 8px; border-radius: 3px; }
         .toggle-sidebar { background: #333; color: white; padding: 5px 10px; cursor: pointer; border-radius: 0 4px 4px 0; position: absolute; left: 0; top: 10px; z-index: 100; transition: left 0.3s ease; border: none; }
+
+        /* Customizing the Highlight Tool Icon (Optional UI Polish) */
+        .ql-background .ql-picker-label::before { content: 'H'; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -52,7 +57,7 @@
             <div class="bottom-bar">
                 <span id="status" class="save-status">Saved</span>
                 <div class="shortcut-info">
-                    Highlight: <strong>Cmd/Ctrl+Shift+H</strong>
+                    Highlight: <strong>Cmd/Ctrl + Shift + Y</strong>
                 </div>
             </div>
         </div>
@@ -64,13 +69,23 @@
 <script>
     var quill = new Quill('#editor-container', {
         modules: {
-            toolbar: [[{ 'size': ['small', false, 'large', 'huge'] }], ['bold', 'italic', 'underline'], [{ 'background': ['#ffff00', '#ced4da', '#d4edda', false] }], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']],
+            toolbar: [
+                [{ 'size': ['small', false, 'large', 'huge'] }],
+                ['bold', 'italic', 'underline'],
+                // This adds the "Background Color" (Highlight) button directly
+                [{ 'background': ['#ffff00', '#ced4da', '#d4edda', '#f8d7da', false] }], 
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['clean']
+            ],
             keyboard: {
                 bindings: {
                     highlight: {
-                        key: 'H', shortKey: true, shiftKey: true,
+                        key: 'Y', // Changed from H to Y to avoid Chrome conflict
+                        shortKey: true,
+                        shiftKey: true,
                         handler: function(range) {
                             const format = this.quill.getFormat(range);
+                            // Toggles yellow highlight
                             this.quill.format('background', format.background ? false : '#ffff00');
                         }
                     }
@@ -87,16 +102,16 @@
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
-    // Trigger save when typing in Title or Editor
     function handleInput() {
         document.getElementById('status').innerText = "Saving...";
         document.getElementById('status').style.color = "#ff9800";
-        
         clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(autoSave, 1000); // Save after 1 second of inactivity
+        saveTimeout = setTimeout(autoSave, 1000);
     }
 
-    quill.on('text-change', handleInput);
+    quill.on('text-change', (delta, oldDelta, source) => {
+        if (source === 'user') handleInput();
+    });
 
     function autoSave() {
         const title = document.getElementById('note-title').value || "Untitled Note";
@@ -127,7 +142,7 @@
         notes.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(note => {
             const div = document.createElement('div');
             div.className = 'note-item';
-            div.innerHTML = `<span style="flex-grow:1" onclick="loadNote(${note.id})">${note.title}</span><button class="btn-delete" onclick="deleteNote(${note.id})">×</button>`;
+            div.innerHTML = `<span style="flex-grow:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;" onclick="loadNote(${note.id})">${note.title}</span><button class="btn-delete" onclick="deleteNote(${note.id})">×</button>`;
             listContainer.appendChild(div);
         });
     }
