@@ -19,7 +19,7 @@
 
         /* Editor Area */
         .editor-area { flex-grow: 1; background: white; padding: 20px; display: flex; flex-direction: column; position: relative; overflow-y: auto; }
-        #editor-container { flex-grow: 1; font-size: 16px; }
+        #editor-container { flex-grow: 1; font-size: 16px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
         .ql-editor p { margin-bottom: 1.5em !important; } 
 
         /* Header Controls */
@@ -35,8 +35,11 @@
         
         .toggle-sidebar { background: #333; color: white; padding: 5px 12px; cursor: pointer; border-radius: 0 4px 4px 0; position: absolute; left: 0; top: 10px; z-index: 100; border: none; }
 
+        /* Bottom Bar */
         .bottom-bar { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 10px; margin-left: 40px; }
-        .save-status { font-size: 0.85em; color: #28a745; font-weight: 600; }
+        .status-group { display: flex; gap: 20px; align-items: center; }
+        .save-status { font-size: 0.85em; color: #28a745; font-weight: 600; min-width: 70px; }
+        .word-count { font-size: 0.85em; color: #555; font-weight: 400; }
         .shortcut-info { font-size: 0.8em; color: #777; }
 
         /* Custom Highlight Button Styling */
@@ -63,7 +66,10 @@
         <div id="editor-container" style="margin-left: 40px;"></div>
 
         <div class="bottom-bar">
-            <span id="status" class="save-status">Saved</span>
+            <div class="status-group">
+                <span id="status" class="save-status">Saved</span>
+                <span id="word-count" class="word-count">0 words</span>
+            </div>
             <div class="shortcut-info">
                 Highlight: <strong>Cmd/Ctrl+Shift+K</strong>
             </div>
@@ -113,9 +119,18 @@
         document.getElementById('sidebar').classList.toggle('open'); 
     }
 
+    function updateWordCount() {
+        const text = quill.getText().trim();
+        const words = text.length > 0 ? text.split(/\s+/).length : 0;
+        document.getElementById('word-count').innerText = `${words} word${words === 1 ? '' : 's'}`;
+    }
+
     function handleInput() {
         document.getElementById('status').innerText = "Saving...";
         document.getElementById('status').style.color = "#ff9800";
+        
+        updateWordCount();
+        
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(autoSave, 1000);
     }
@@ -166,8 +181,7 @@
             document.getElementById('note-title').value = note.title;
             quill.setContents(note.content);
             document.getElementById('status').innerText = "Saved";
-            // Auto-close sidebar on mobile/small screens if you prefer, 
-            // but for now keeping it manual.
+            updateWordCount();
         }
     }
 
@@ -176,6 +190,7 @@
         document.getElementById('note-title').value = '';
         quill.setContents([]);
         document.getElementById('status').innerText = "New Note";
+        document.getElementById('word-count').innerText = "0 words";
         document.getElementById('note-title').focus();
     }
 
