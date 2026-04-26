@@ -72,12 +72,10 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <script>
-    // 1. Define the Highlight Toggle behavior
     const highlightHandler = function() {
         const range = quill.getSelection();
         if (!range) return;
         const format = quill.getFormat(range);
-        // If already highlighted, remove it. Otherwise, use yellow (or last picked color).
         if (format.background) {
             quill.format('background', false);
         } else {
@@ -91,8 +89,9 @@
                 container: [
                     [{ 'size': ['small', false, 'large', 'huge'] }],
                     ['bold', 'italic', 'underline'],
-                    ['highlight'], // Our custom toggle button
-                    [{ 'background': ['#ffff00', '#ced4da', '#d4edda', '#f8d7da', false] }], // The color picker
+                    ['highlight'], 
+                    [{ 'background': ['#ffff00', '#ced4da', '#d4edda', '#f8d7da', false] }], 
+                    [{ 'color': [] }], // This adds the standard text color picker
                     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                     ['clean']
                 ],
@@ -114,7 +113,6 @@
         theme: 'snow'
     });
 
-    // Fix UI for custom button
     const highlightBtn = document.querySelector('.ql-highlight');
     highlightBtn.title = "Toggle Highlight";
 
